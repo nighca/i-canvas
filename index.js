@@ -128,7 +128,7 @@
         setAttribute: function(key, val){
             if($.type(key) === '[object String]'){
                 this.attr[key] = val;
-                this.fire('attr-modify', {
+                this.document.fireDomEvent('attr-modify', {
                     target: this,
                     attr: key,
                     val: val
@@ -197,7 +197,10 @@
                 this.children.push(element);
                 element.parent = this;
 
-                
+                this.document.fireDomEvent('subtree-modify', {
+                    target: this,
+                    add: element
+                });
             }
 
             return this;
@@ -273,37 +276,44 @@
         init: function(dom){
             this.dom = dom;
 
-            this.root = this.createElement('rectangle', {
+            this.body = this.createElement('rectangle', {
                 width: dom.width,
                 height: dom.height,
                 background: 'red'
             });
 
             // delegate events
-            canvas.delegateEvents();
+            this.delegateEvents();
         },
         createElement: function(type, opt){
             return Ielement.types[type] ? (new Ielement.types[type](this, opt)) : null;
         },
-        fireDomEvent: function(type, e){
-            e = new DomEvent(e);
-            e.type = type;
+        register: function(){},
+        fireDomEvent: function(type, data){
+            e = new DomEvent($.extend(data, {
+                type: type
+            }, true));
 
             var target = e.target;
 
-            while(target){
-                target.fire(type, e);
+            // need to bubble
+            if(['attr-modify'].indexOf(type) < 0){
+                while(target){
+                    target.fire(type, e);
 
-                if(e.stopped) break;
+                    if(e.stopped) break;
 
-                target = target.parent;
+                    target = target.parent;
+                }
             }
 
-            this.fire('dom-event', e);
+            this.fire('dom-event', {
+                domEvent: e
+            });
         },
         getRenderQueue: function(){
             var queue = [];
-            this.root.walk(function(element){
+            this.body.walk(function(element){
                 element.__cache__.zIndex = null;
                 queue.push(element);
             });
@@ -340,19 +350,12 @@
                         }
                     }
 
-                    var e = new DomEvent({
+                    manager.fireDomEvent(eventName, {
                         x: x,
                         y: y,
                         origin: origin,
                         target: target
                     });
-                    while(target){
-                        target.fire(eventName, e);
-
-                        if(e.stopped) break;
-
-                        target = target.parent;
-                    }
                 });
             });
 
@@ -382,11 +385,11 @@
             canvas.width = dom.width;
             canvas.height = dom.height;
 
-            canvas.domManager = new DomManager(dom);
+            canvas.document = new DomManager(dom);
 
             // redraw while tree modify
-            canvas.domManager.on('dom-event', function(e){
-                if([].indexOf(e.type) >= 0){
+            canvas.document.on('dom-event', function(e){
+                if(['attr-modify', 'subtree-modify'].indexOf(e.domEvent.type) >= 0){
                     canvas.draw();
                 }
             });
@@ -400,7 +403,7 @@
             ctx.clearRect(0, 0, this.width, this.height)
 
             // get the render queue & render one by one
-            this.domManager.getRenderQueue().forEach(function(element){
+            this.document.getRenderQueue().forEach(function(element){
                 element.draw(ctx);
             });
         }

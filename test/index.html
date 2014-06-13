@@ -19,17 +19,19 @@
 	<script type="text/javascript">
 	var canvas = $('#canvas');
 
-	canvas.on('mouseenter', function(e){
+	/*canvas.on('mouseenter', function(e){
 		console.log(e);
 	});
 
 	canvas.on('mouseleave', function(e){
 		console.log(e);
-	});
+	});*/
 
 	var icanvas = new Icanvas(canvas, '2d');
 
-	var rec1 = icanvas.body.createChild('rectangle', {
+	var body = icanvas.document.body;
+
+	var rec1 = body.createChild('rectangle', {
 		top: 100,
 		left: 100,
 		width: 100,
@@ -37,7 +39,7 @@
 		background: 'yellow'
 	});
 
-	var circle1 = icanvas.body.createChild('circle', {
+	var circle1 = body.createChild('circle', {
 		top: 300,
 		left: 300,
 		radius: 50,
@@ -53,7 +55,7 @@
 		'z-index': 10
 	});
 
-	/*icanvas.body.on('click', function(e) {
+	/*body.on('click', function(e) {
 		console.log('body cliked', e);
 	})
 
