@@ -110,7 +110,8 @@
             height: 0,
             background: null,
             position: 'relative',
-            'z-index': null
+            'z-index': null,
+            visible: true
         },
         init: function(document, opt){
             this.document = document;
@@ -141,6 +142,12 @@
             }
 
             return this;
+        },
+        show: function(){
+            this.setAttribute('visible', true);
+        },
+        hide: function(){
+            this.setAttribute('visible', false);
         },
         getPos: function(){
             var attr = this.attr;
@@ -388,9 +395,13 @@
             canvas.document = new DomManager(dom);
 
             // redraw while tree modify
+            var timer;
             canvas.document.on('dom-event', function(e){
                 if(['attr-modify', 'subtree-modify'].indexOf(e.domEvent.type) >= 0){
-                    canvas.draw();
+                    clearTimeout(timer);
+                    timer = setTimeout(function(){
+                        canvas.draw();
+                    }, 0);
                 }
             });
 
@@ -404,7 +415,7 @@
 
             // get the render queue & render one by one
             this.document.getRenderQueue().forEach(function(element){
-                element.draw(ctx);
+                element.getAttribute('visible') && element.draw(ctx);
             });
         }
     });

@@ -55,6 +55,15 @@
 		'z-index': 10
 	});
 
+	circle1.on('click', function(e){
+		body.createChild('circle', {
+			top: Math.random() * 400,
+			left: Math.random() * 400,
+			radius: Math.random() * 20,
+			background: 'white'
+		});
+	});
+
 	/*body.on('click', function(e) {
 		console.log('body cliked', e);
 	})
@@ -98,7 +107,7 @@
 		});
 	};
 
-	movable(circle1);
+	//movable(circle1);
 	movable(circle2);
 	movable(rec1);
 
