@@ -19,6 +19,14 @@
 	<script type="text/javascript">
 	var canvas = $('#canvas');
 
+	canvas.on('mouseenter', function(e){
+		console.log(e);
+	});
+
+	canvas.on('mouseleave', function(e){
+		console.log(e);
+	});
+
 	var icanvas = new Icanvas(canvas, '2d');
 
 	var rec1 = icanvas.body.createChild('rectangle', {
@@ -34,6 +42,15 @@
 		left: 300,
 		radius: 50,
 		background: 'blue'
+	});
+
+	var circle2 = rec1.createChild('circle', {
+		top: 50,
+		left: 50,
+		radius: 20,
+		background: 'green',
+		position: 'relative',
+		'z-index': 10
 	});
 
 	/*icanvas.body.on('click', function(e) {
@@ -54,6 +71,7 @@
 	var movable = function(element){
 		var offsetX = 0;
 		var offsetY = 0;
+		var win = $(window);
 
 		var moveWith = function(e){
 			element.setAttribute({
@@ -63,20 +81,23 @@
 		};
 
 		var endBind = function(e) {
-			icanvas.body.un('mousemove', moveWith);
-			icanvas.body.un('mouseup', endBind);
+			win.un('mousemove', moveWith);
+			win.un('mouseup', endBind);
 		};
 
 		element.on('mousedown', function(e) {
+			e.stopPropagation();
+
 			offsetX = e.x - element.getAttribute('left');
 			offsetY = e.y - element.getAttribute('top');
 
-			icanvas.body.on('mousemove', moveWith);
-			icanvas.body.on('mouseup', endBind);
+			win.on('mousemove', moveWith);
+			win.on('mouseup', endBind);
 		});
 	};
 
 	movable(circle1);
+	movable(circle2);
 	movable(rec1);
 
 	</script>
