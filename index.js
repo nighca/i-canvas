@@ -1,25 +1,9 @@
-(function(window, $, Class, undefined){
+/*
+ * main
+ */
 
-    // helpers
-    var drawRectangle = function(ctx, x, y, w, h, style){
-        var originStyle = ctx.fillStyle;
-
-        ctx.fillStyle = style;
-        ctx.fillRect(x, y, w, h);
-
-        ctx.fillStyle = originStyle;
-    };
-    var drawCircle = function(ctx, x, y, r, style){
-        var originStyle = ctx.fillStyle;
-
-        ctx.fillStyle = style;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI*2, true);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = originStyle;
-    };
+(function(window, $, Class, util, undefined){
+    'use strict';
 
     // classes
 
@@ -27,7 +11,7 @@
         on: function(name, handler){
             name = name.toLowerCase();
 
-            var list = this._ep_getList();
+            var list = this.__e_getList__();
 
             (list[name] = list[name] || []).push(handler);
 
@@ -35,7 +19,7 @@
         },
         un: function(name, handler){
             name = name.toLowerCase();
-            var list = this._ep_getList(),
+            var list = this.__e_getList__(),
                 handlers = list[name];
 
             if(handlers){
@@ -63,7 +47,7 @@
             }
             name = name.toLowerCase();
 
-            var list = this._ep_getList(),
+            var list = this.__e_getList__(),
                 handlers = list[name];
 
             if(handlers){
@@ -78,12 +62,12 @@
 
             return this;
         },
-        _ep_getList: function(){
-            if(!this._ep_list){
-                this._ep_list = {};
+        __e_getList__: function(){
+            if(!this.__e_list__){
+                this.__e_list__ = {};
             }
 
-            return this._ep_list;
+            return this.__e_list__;
         }
     });
 
@@ -101,8 +85,7 @@
         }
     });
 
-    var Ielement = EventEmitter.extend('Ielement', {
-        type: 'element',
+    var Element = EventEmitter.extend('Element', {
         attr: {
             top: 0,
             left: 0,
@@ -115,7 +98,6 @@
         },
         init: function(document, opt){
             this.document = document;
-            this.type = this.type;
 
             this.attr = $.extend(this.attr, opt);
             this.children = [];
@@ -200,7 +182,11 @@
             }
         },
         appendChild: function(element){
-            if(element && (element instanceof Ielement)){
+            if(element && (element instanceof Element) && this.children.indexOf(element) < 0){
+                if(element.parent){
+                    element.parent.removeChild(element);
+                }
+
                 this.children.push(element);
                 element.parent = this;
 
@@ -212,11 +198,27 @@
 
             return this;
         },
-        createChild: function(type, opt){
-            var element = this.document.createElement(type, opt);
-            this.appendChild(element);
+        removeChild: function(element){
+            var index = -1;
+            if(element && (element instanceof Element)){
+                index = this.children.indexOf(element);
+            }else if(typeof element === 'number'){
+                index = element;
+                element = this.children[index];
+            }else{
+                return this;
+            }
 
-            return element;
+            if(index >= 0){
+                this.children.splice(index, 1);
+                element.parent = null;
+
+                this.document.fireDomEvent('subtree-modify', {
+                    target: this,
+                    remove: element
+                });
+            }
+            return this;
         },
         containsPoint: function(x, y){
             return false;
@@ -232,19 +234,19 @@
         }
     });
 
-    Ielement.types = {};
-    var createElementType = function(name, opt){
-        opt.type = name;
-        opt.attr = $.extend(opt.attr, Ielement.prototype.attr, true);
-        Ielement.types[name] = Ielement.extend(name.toUpperCase(), opt);
+    Element.types = {};
+    var createElementType = function(name, opt, base){
+        base = base ? Element.types[base] : Element;
+        opt.attr = $.extend(opt.attr, base.prototype.attr, true);
+        Element.types[name] = base.extend(name[0].toUpperCase() + name.slice(1), opt);
     };
 
     createElementType('rectangle', {
-        draw: function(ctx){
+        draw: function(canvas){
             var pos = this.getPos(),
                 attr = this.attr;
             if(attr.background){
-                drawRectangle(ctx, pos.x, pos.y, attr.width, attr.height, attr.background);
+                canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, attr.background);
             }
 
             return this;
@@ -261,11 +263,11 @@
         attr: {
             radius: 0
         },
-        draw: function(ctx){
+        draw: function(canvas){
             var pos = this.getPos(),
                 attr = this.attr;
             if(attr.background){
-                drawCircle(ctx, pos.x, pos.y, attr.radius, attr.background);
+                canvas.drawCircle(pos.x, pos.y, attr.radius, attr.background);
             }
 
             return this;
@@ -283,6 +285,8 @@
         init: function(dom){
             this.dom = dom;
 
+            this.__cache__ = {};
+
             this.body = this.createElement('rectangle', {
                 width: dom.width,
                 height: dom.height,
@@ -293,24 +297,23 @@
             this.delegateEvents();
         },
         createElement: function(type, opt){
-            return Ielement.types[type] ? (new Ielement.types[type](this, opt)) : null;
+            return Element.types[type] ? (new Element.types[type](this, opt)) : null;
         },
-        register: function(){},
         fireDomEvent: function(type, data){
-            e = new DomEvent($.extend(data, {
+            var e = new DomEvent($.extend(data, {
                 type: type
             }, true));
 
             var target = e.target;
+            
+            // fire the dom's event
+            target.fire(type, e);
 
             // need to bubble
-            if(['attr-modify'].indexOf(type) < 0){
-                while(target){
-                    target.fire(type, e);
-
+            if(['attr-modify', 'mouseenter', 'mouseleave'].indexOf(type) < 0){
+                while(target.parent){
                     if(e.stopped) break;
-
-                    target = target.parent;
+                    (target = target.parent).fire(type, e);
                 }
             }
 
@@ -321,15 +324,15 @@
         getRenderQueue: function(){
             var queue = [];
             this.body.walk(function(element){
-                element.__cache__.zIndex = null;
+                element.__cache__.zIndex = null;            // clean cache
                 queue.push(element);
             });
 
             var getZIndex = function(element){
-                return element.__cache__.zIndex !== null ? element.__cache__.zIndex : element.getZIndex();
+                return element.__cache__.zIndex !== null ? element.__cache__.zIndex : (element.__cache__.zIndex = element.getZIndex());
             };
 
-            queue.sort(function(e1, e2){
+            queue = util.stableSort(queue, function(e1, e2){
                 return getZIndex(e1) > getZIndex(e2);
             });
 
@@ -348,7 +351,7 @@
 
                     var target;
 
-                    // get clickedElements
+                    // get affectedElements
                     var renderQueue = manager.getRenderQueue();
                     for(var i = renderQueue.length - 1; i >= 0; i--){
                         if(renderQueue[i].containsPoint(x, y)){
@@ -367,7 +370,16 @@
             });
 
             // mouseenter & mouseleave
-            /*['mouseenter', 'mousemove', 'mouseleave'].forEach(function(eventName){
+
+            var getCommonParent = function(e1, e2){
+                while(e1 && !e1.contains(e2)){
+                    e1 = e1.parent;
+                }
+                return e1;
+            };
+
+            var prev = {};
+            ['mouseenter', 'mousemove', 'mouseleave'].forEach(function(eventName){
                 dom.on(eventName, function(e){
                     var x = e.offsetX,
                         y = e.offsetY,
@@ -375,9 +387,46 @@
 
                     var target;
 
+                    var renderQueue = manager.getRenderQueue();
+                    for(var i = renderQueue.length - 1; i >= 0; i--){
+                        if(renderQueue[i].containsPoint(x, y)){
+                            target = renderQueue[i];
+                            break;
+                        }
+                    }
 
+                    if(target !== prev.target){
+                        var parent = getCommonParent(target, prev.target);
+
+                        var element = prev.target;
+                        while(element !== parent){
+                            manager.fireDomEvent('mouseleave', {
+                                x: x,
+                                y: y,
+                                origin: origin,
+                                target: element
+                            });
+                            element = element.parent;
+                        }
+
+                        element = target;
+                        while(element !== parent){
+                            manager.fireDomEvent('mouseenter', {
+                                x: x,
+                                y: y,
+                                origin: origin,
+                                target: element
+                            });
+                            element = element.parent;
+                        }
+                    }
+
+                    prev = {
+                        e: e,
+                        target: target
+                    };
                 });
-            });*/
+            });
 
         }
     });
@@ -408,17 +457,39 @@
             canvas.draw();
         },
         draw: function(){
-            var ctx = this.ctx;
+            var canvas = this,
+                ctx = canvas.ctx;
 
             // clean
             ctx.clearRect(0, 0, this.width, this.height)
 
             // get the render queue & render one by one
             this.document.getRenderQueue().forEach(function(element){
-                element.getAttribute('visible') && element.draw(ctx);
+                element.getAttribute('visible') && element.draw(canvas);
             });
+        },
+        drawRectangle: function(x, y, w, h, style){
+            var ctx = this.ctx,
+                originStyle = ctx.fillStyle;
+
+            ctx.fillStyle = style;
+            ctx.fillRect(x, y, w, h);
+
+            ctx.fillStyle = originStyle;
+        },
+        drawCircle: function(x, y, r, style){
+            var ctx = this.ctx,
+                originStyle = ctx.fillStyle;
+
+            ctx.fillStyle = style;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI*2, true);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = originStyle;
         }
     });
 
     window.Icanvas = Icanvas;
-})(this, $, Class);
+})(this, $, Class, util);

@@ -2,8 +2,9 @@
 <html>
 <head>
 	<title></title>
-	<script type="text/javascript" src="https://rawgit.com/nighca/lib/master/lib.js"></script>
+	<script type="text/javascript" src="../lib/lib.js"></script>
 	<script type="text/javascript" src="../lib/class.js"></script>
+	<script type="text/javascript" src="../lib/util.js"></script>
 	<script type="text/javascript" src="../index.js"></script>
 	<style type="text/css">
 	#canvas{
@@ -29,9 +30,10 @@
 
 	var icanvas = new Icanvas(canvas, '2d');
 
-	var body = icanvas.document.body;
+	var doc = icanvas.document,
+		body = doc.body;
 
-	var rec1 = body.createChild('rectangle', {
+	var rec1 = doc.createElement('rectangle', {
 		top: 100,
 		left: 100,
 		width: 100,
@@ -39,14 +41,14 @@
 		background: 'yellow'
 	});
 
-	var circle1 = body.createChild('circle', {
+	var circle1 = doc.createElement('circle', {
 		top: 300,
 		left: 300,
 		radius: 50,
 		background: 'blue'
 	});
 
-	var circle2 = rec1.createChild('circle', {
+	var circle2 = doc.createElement('circle', {
 		top: 50,
 		left: 50,
 		radius: 20,
@@ -55,7 +57,11 @@
 		'z-index': 10
 	});
 
-	circle1.on('click', function(e){
+    body.appendChild(rec1);
+    body.appendChild(circle1);
+    rec1.appendChild(circle2);
+
+	/*circle1.on('click', function(e){
 		body.createChild('circle', {
 			top: Math.random() * 400,
 			left: Math.random() * 400,
@@ -63,7 +69,7 @@
 			background: 'white'
 		});
 	});
-
+*/
 	/*body.on('click', function(e) {
 		console.log('body cliked', e);
 	})
@@ -72,11 +78,12 @@
 		console.log('rec cliked', e);
 	})*/
 
-    /*['click', 'drag', 'drop', 'mousedown', 'mousemove', 'mouseup'].forEach(function(eventName){
-		circle1.on(eventName, function(e) {
-			e.stopPropagation();
-			console.log('circle', eventName, e);
-		})
+	/*['mouseenter', 'mouseleave'].forEach(function(eventName){
+		[body, rec1, circle1, circle2].forEach(function(dom, i){
+			dom.on(eventName, function(e) {
+				console.log(i, eventName, e);
+			});
+		});
 	});*/
 
 	var movable = function(element){
