@@ -28,10 +28,12 @@
             left: 0,                    // postion - [ number(100) ]
             width: 0,                   // size - [ number(100) ]
             height: 0,                  // size - [ number(100) ]
-            background: null,           // look - [ color(#333) ]
+            background: null,           // background style - [ color(#333) ]
             position: 'relative',       // position method - [ 'relative', 'absolute' ]
             'z-index': null,            // render queue - [ number(1) ]
-            visible: true               // visibility - [ true, false ]
+            visible: true,              // visibility - [ true, false ]
+            'border-width': 0,          // width of border - [ number(1) ]
+            border: null                // border style - [ color(#333) ]
         },
         init: function(document, opt){
             // document as enviroment
@@ -451,6 +453,12 @@
         draw: function(canvas){
             var pos = this.getPos(),
                 attr = this.attr;
+
+            if(attr.border){
+                var borderWidth = attr['border-width'];
+                canvas.drawRectangle(pos.x - borderWidth, pos.y - borderWidth, attr.width + borderWidth * 2, attr.height + borderWidth * 2, attr.border);
+            }
+
             if(attr.background){
                 canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, attr.background);
             }
@@ -460,9 +468,10 @@
         // realize rectangle-contain
         containsPoint: function(x, y){
             var pos = this.getPos(),
-                attr = this.attr;
-            return (x >= pos.x && x <= pos.x + attr.width) &&
-                (y >= pos.y && y <= pos.y + attr.height);
+                attr = this.attr,
+                borderWidth = attr.border ? attr['border-width'] : 0;
+            return (x >= pos.x - borderWidth && x <= pos.x + attr.width + borderWidth) &&
+                (y >= pos.y - borderWidth && y <= pos.y + attr.height + borderWidth);
         }
     });
 
@@ -475,6 +484,12 @@
         draw: function(canvas){
             var pos = this.getPos(),
                 attr = this.attr;
+
+            if(attr.border){
+                var borderWidth = attr['border-width'];
+                canvas.drawCircle(pos.x, pos.y, attr.radius + borderWidth, attr.border);
+            }
+
             if(attr.background){
                 canvas.drawCircle(pos.x, pos.y, attr.radius, attr.background);
             }
@@ -484,9 +499,10 @@
         // realize circle-contain
         containsPoint: function(x, y){
             var pos = this.getPos(),
-                attr = this.attr;
+                attr = this.attr,
+                borderWidth = attr.border ? attr['border-width'] : 0;
             var dd = Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2),
-                rr = Math.pow(attr.radius, 2);
+                rr = Math.pow(attr.radius + borderWidth, 2);
             return dd <= rr;
         }
     });
