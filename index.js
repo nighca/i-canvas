@@ -1,108 +1,13 @@
-(function(window, $, Class, undefined){
+/*
+ * main
+ * exports Canvas
+ */
 
-    // helpers
-    var drawRectangle = function(ctx, x, y, w, h, style){
-        var originStyle = ctx.fillStyle;
+(function(window, $, Class, util, undefined){
+    'use strict';
 
-        ctx.fillStyle = style;
-        ctx.fillRect(x, y, w, h);
-
-        ctx.fillStyle = originStyle;
-    };
-    var drawCircle = function(ctx, x, y, r, style){
-        var originStyle = ctx.fillStyle;
-
-        ctx.fillStyle = style;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI*2, true);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = originStyle;
-    };
-
-    /*var getScreenPos = function(element){
-        var top = left = 0;
-        while(element){
-            top += element.offsetTop;
-            left += element.offsetLeft;
-
-            element = element.offsetParent;
-        }
-
-        return {
-            left: left - window.scrollX,
-            top: top - window.scrollY
-        };
-    };*/
-
-    // classes
-
-    var EventEmitter = Class.extend({
-        on: function(name, handler){
-            name = name.toLowerCase();
-
-            var list = this._ep_getList();
-
-            (list[name] = list[name] || []).push(handler);
-
-            return this;
-        },
-        un: function(name, handler){
-            name = name.toLowerCase();
-            var list = this._ep_getList(),
-                handlers = list[name];
-
-            if(handlers){
-                if(!handler){
-                    list[name] = null;
-                }
-
-                var remaining = [];
-
-                for(var i = 0, len = handlers.length; i < len; i++){
-                    if(handlers[i] !== handler){
-                        remaining.push(handlers[i]);
-                    }
-                }
-
-                list[name] = remaining.length ? remaining : null;
-            }
-
-            return this;
-        },
-        fire: function(name, data){
-            if(Object.prototype.toString.call(name) === '[object Object]' && name.type && !data){
-                data = name;
-                name = data.type;
-            }
-            name = name.toLowerCase();
-
-            var list = this._ep_getList(),
-                handlers = list[name];
-
-            if(handlers){
-                for(var i = 0, len = handlers.length; i < len; i++){
-                    try{
-                        handlers[i].call(this, data);
-                    }catch(e){
-                        console.warn(e);
-                    }
-                }
-            }
-
-            return this;
-        },
-        _ep_getList: function(){
-            if(!this._ep_list){
-                this._ep_list = {};
-            }
-
-            return this._ep_list;
-        }
-    });
-
-    var Event = Class.extend({
+    // simulated dom-event class
+    var DomEvent = Class.extend('DomEvent', {
         prevented: false,
         stopped: false,
         init: function(opt){
@@ -116,30 +21,41 @@
         }
     });
 
-    var Ielement = EventEmitter.extend({
-        type: 'element',
+    // simulated dom element base class
+    var Element = util.EventEmitter.extend('Element', {
+        // default attribute values
         attr: {
-            top: 0,
-            left: 0,
-            width: 0,
-            height: 0,
-            background: null
+            top: 0,                     // postion - [ number(100) ]
+            left: 0,                    // postion - [ number(100) ]
+            width: 0,                   // size - [ number(100) ]
+            height: 0,                  // size - [ number(100) ]
+            background: null,           // background style - [ color(#333) ]
+            position: 'relative',       // position method - [ 'relative', 'absolute' ]
+            'z-index': null,            // render queue - [ number(1) ]
+            visible: true,              // visibility - [ true, false ]
+            'border-width': 0,          // width of border - [ number(1) ]
+            border: null                // border style - [ color(#333) ]
         },
-        init: function(canvas, opt){
-            this.canvas = canvas;
-            this.ctx = canvas.ctx;
-            this.type = this.type;
+        init: function(document, opt){
+            // document as enviroment
+            this.document = document;
 
+            // init attributes
             this.attr = $.extend(this.attr, opt);
             this.children = [];
+
+            // some special usage
+            this.__cache__ = {};
         },
+        // ['key']
         getAttribute: function(key){
             return this.attr[key];
         },
+        // ['key', val] / [{key: val}]
         setAttribute: function(key, val){
             if($.type(key) === '[object String]'){
                 this.attr[key] = val;
-                this.fire('attr-modify', {
+                this.document.fireDomEvent('attr-modify', {
                     target: this,
                     attr: key,
                     val: val
@@ -153,9 +69,53 @@
 
             return this;
         },
+        show: function(){
+            this.setAttribute('visible', true);
+        },
+        hide: function(){
+            this.setAttribute('visible', false);
+        },
+        // calculate real position
+        getPos: function(){
+            var attr = this.attr;
+
+            switch(attr.position){
+
+            case 'absolute':
+                return {
+                    x: attr.left,
+                    y: attr.top
+                };
+
+            case 'relative':
+                var base = this.parent ? this.parent.getPos() : {
+                    x: 0,
+                    y: 0
+                };
+
+                return {
+                    x: base.x + attr.left,
+                    y: base.y + attr.top
+                };
+
+            default:
+                return {
+                    x: 0,
+                    y: 0
+                }
+            }
+        },
+        // calculate real z-index
+        getZIndex: function(){
+            return this.attr['z-index'] === null ?
+                (this.parent ? this.parent.getZIndex() : 0) :
+                this.attr['z-index'];
+        },
+        // draw self on canvas
         draw: function(){
             return this;
         },
+        // walk the tree (self as the root) [fn, true/false]
         walk: function(handler, childrenFirst){
             if(!childrenFirst){
                 handler(this);
@@ -169,36 +129,17 @@
                 handler(this);
             }
         },
-        bind: function(ele, e, handler){
-            ele.on(e, handler);
-
-            (this._bindList = this._bindList || []).push({
-                element: ele,
-                event: e,
-                handler: handler
-            });
-        },
-        cleanBind: function(){
-            if(this._bindList){
-                this._bindList.forEach(function(item){
-                    item.element.un(item.event, item.handler);
-                });
-                this._bindList = [];
-            }
-        },
+        // add element at the end of self's children [element]
         appendChild: function(element){
-            if(element && (element instanceof Ielement)){
+            if(element && (element instanceof Element) && this.children.indexOf(element) < 0){
+                if(element.parent){
+                    element.parent.removeChild(element);
+                }
+
                 this.children.push(element);
                 element.parent = this;
 
-                var _this = this;
-                var onChildChange = function(e){
-                    _this.fire('subtree-modify', e);
-                };
-                this.bind(element, 'attr-modify', onChildChange);
-                this.bind(element, 'subtree-modify', onChildChange);
-
-                this.fire('subtree-modify', {
+                this.document.fireDomEvent('subtree-modify', {
                     target: this,
                     add: element
                 });
@@ -206,29 +147,54 @@
 
             return this;
         },
-        createChild: function(type, opt){
-            var element = this.canvas.createElement(type, opt);
-            this.appendChild(element);
-
-            return element;
-        },
-        clean: function(){
-            var _this = this;
-            this.walk(function(element){
-                if(element === _this){
-                    element.cleanBind();
-                    element.children = [];
-                    element.fire('subtree-modify', {
-                        target: element
-                    });
-                }else{
-                    element.clean();
+        // insert element before given node [element, element]
+        insertBefore: function(element, ref){
+            var pos;
+            if(element && (element instanceof Element) && this.children.indexOf(element) < 0 &&
+                ref && (ref instanceof Element) && (pos = this.children.indexOf(ref)) >= 0){
+                if(element.parent){
+                    element.parent.removeChild(element);
                 }
-            }, true);
+
+                this.children.splice(pos - 1, 0, element);
+                element.parent = this;
+
+                this.document.fireDomEvent('subtree-modify', {
+                    target: this,
+                    add: element
+                });
+            }
+
+            return this;
         },
+        // remove a childnode [element]
+        removeChild: function(element){
+            var index = -1;
+            if(element && (element instanceof Element)){
+                index = this.children.indexOf(element);
+            }else if(typeof element === 'number'){
+                index = element;
+                element = this.children[index];
+            }else{
+                return this;
+            }
+
+            if(index >= 0){
+                this.children.splice(index, 1);
+                element.parent = null;
+
+                this.document.fireDomEvent('subtree-modify', {
+                    target: this,
+                    remove: element
+                });
+            }
+            return this;
+        },
+        // contains a position [number, number]
         containsPoint: function(x, y){
             return false;
         },
+        // contains a element [element]
         contains: function(element){
             while(element){
                 if(element === this){
@@ -240,133 +206,323 @@
         }
     });
 
-    var Irectangle = Ielement.extend({
-        type: 'rectangle',
-        attr: {
-        },
-        draw: function(){
-            var attr = this.attr;
-            if(attr.background){
-                drawRectangle(this.ctx, attr.left, attr.top, attr.width, attr.height, attr.background);
-            }
+    // types of element [rectangle, circle, ...]
+    Element.types = {};
 
-            return this;
-        },
-        containsPoint: function(x, y){
-            var attr = this.attr;
-            return (x >= attr.left && x <= attr.left + attr.width) &&
-                (y >= attr.top && y <= attr.top + attr.height);
-        }
-    });
+    // simulated dom manager class
+    var DomManager = util.EventEmitter.extend('DomManager', {
+        init: function(opt){
+            // real dom object
+            this.dom = opt.dom;
 
-    var Icircle = Ielement.extend({
-        type: 'circle',
-        attr: {
-            radius: 0
-        },
-        draw: function(){
-            var attr = this.attr;
-            if(attr.background){
-                drawCircle(this.ctx, attr.left, attr.top, attr.radius, attr.background);
-            }
+            // size
+            this.width = opt.width;
+            this.height = opt.height;
 
-            return this;
-        },
-        containsPoint: function(x, y){
-            var attr = this.attr;
-            var dd = Math.pow(x - attr.left, 2) + Math.pow(y - attr.top, 2),
-                rr = Math.pow(attr.radius, 2);
-            return dd <= rr;
-        }
-    });
+            // real size & scale
+            this.clientWidth = this.dom.clientWidth;
+            this.clientHeight = this.dom.clientHeight;
+            this.scaleWidth = this.width / this.clientWidth;
+            this.scaleHeight = this.height / this.clientHeight;
 
-    Ielement.types = {
-        'rectangle': Irectangle,
-        'circle': Icircle
-    };
-
-    var Icanvas = EventEmitter.extend({
-        init: function(dom, type){
-            var canvas = this;
-
-            canvas.dom = dom;
-            canvas.ctx = canvas.dom.getContext(type || '2d');
-
-            canvas.width = dom.width;
-            canvas.height = dom.height;
-
-            canvas.body = canvas.createElement('rectangle', {
-                top: 0,
-                left: 0,
-                width: canvas.width,
-                height: canvas.height,
+            // body element, also dom tree root
+            this.body = this.createElement('rectangle', {
+                width: this.width,
+                height: this.height,
                 background: 'red'
             });
 
-            // redraw while tree modify
-            ['attr-modify', 'subtree-modify'].forEach(function(event){
-                canvas.body.on(event, function(e){
-                    canvas.draw();
-                });
+            // delegate events
+            this.delegateEvents();
+        },
+        // create new element ['type', {opt}]
+        createElement: function(type, opt){
+            return Element.types[type] ? (new Element.types[type](this, opt)) : null;
+        },
+        // fire a dom event(& do bubble) ['type', {data}]
+        fireDomEvent: function(type, data){
+            var e = new DomEvent($.extend(data, {
+                type: type
+            }, true));
+
+            var target = e.target;
+            
+            // fire the dom's event
+            target.fire(type, e);
+
+            // need to bubble
+            if(['attr-modify', 'mouseenter', 'mouseleave'].indexOf(type) < 0){
+                while(target.parent){
+                    if(e.stopped) break;
+                    (target = target.parent).fire(type, e);
+                }
+            }
+
+            this.fire('dom-event', {
+                domEvent: e
+            });
+        },
+        // get a array as render sequence(decided by tree structure & elements' z-index attribute)
+        getRenderQueue: function(){
+            var queue = [];
+            this.body.walk(function(element){
+                element.__cache__.zIndex = null;            // clean cache
+                queue.push(element);
             });
 
-            // delegate events
-            canvas.delegateEvents();
+            var getZIndex = function(element){
+                return element.__cache__.zIndex !== null ? element.__cache__.zIndex : (element.__cache__.zIndex = element.getZIndex());
+            };
 
-            canvas.draw();
+            queue = util.stableSort(queue, function(e1, e2){
+                return getZIndex(e1) > getZIndex(e2);
+            });
+
+            return queue;
         },
+        // delegate some mouse events('click', 'drag', 'drop', 'mousedown', 'mousemove', 'mouseup', 'mousemove', 'mouseleave', ...)
         delegateEvents: function(){
-            var canvas = this,
-                dom = canvas.dom,
-                body = canvas.body;
+            var manager = this,
+                dom = manager.dom;
 
-            // click & mouse...
+            // click & drag, drop, mousedown, mousemove, mouseup
+
+            // these events can be directly delegated
             ['click', 'drag', 'drop', 'mousedown', 'mousemove', 'mouseup'].forEach(function(eventName){
                 dom.on(eventName, function(e){
-                    var x = e.offsetX,
-                        y = e.offsetY,
+                    var x = e.offsetX * manager.scaleWidth,
+                        y = e.offsetY * manager.scaleHeight,
                         origin = e;
 
                     var target;
 
-                    // get clickedElements
-                    body.walk(function(element){
-                        if(element.containsPoint(x, y)){
-                            target = element;
-                        }
-                    });
+                    // get event target
 
-                    var e = new Event({
+                    var renderQueue = manager.getRenderQueue();
+                    for(var i = renderQueue.length - 1; i >= 0; i--){
+                        if(renderQueue[i].containsPoint(x, y)){
+                            target = renderQueue[i];
+                            break;
+                        }
+                    }
+
+                    target && manager.fireDomEvent(eventName, {
                         x: x,
                         y: y,
-                        offsetX: x - target.left,
-                        offsetY: y - target.top,
                         origin: origin,
                         target: target
                     });
-                    while(target){
-                        target.fire(eventName, e);
-
-                        if(e.stopped) break;
-
-                        target = target.parent;
-                    }
                 });
             });
-        },
-        draw: function(){
-            // clean
-            this.ctx.clearRect(0, 0, this.width, this.height)
 
-            // walk the tree & draw every element (parent first)
-            this.body.walk(function(element){
-                element.draw();
+            // mouseenter & mouseleave
+
+            // to record prev info
+            var prev = {};
+
+            // these three may cause 'mouseenter' or 'mouseleave'
+            ['mouseenter', 'mousemove', 'mouseleave'].forEach(function(eventName){
+                dom.on(eventName, function(e){
+                    var x = e.offsetX * manager.scaleWidth,
+                        y = e.offsetY * manager.scaleHeight,
+                        origin = e;
+
+                    var target;
+
+                    // get event target
+
+                    var renderQueue = manager.getRenderQueue();
+                    for(var i = renderQueue.length - 1; i >= 0; i--){
+                        if(renderQueue[i].containsPoint(x, y)){
+                            target = renderQueue[i];
+                            break;
+                        }
+                    }
+
+                    // different targets while move
+                    if(target !== prev.target){
+                        var parent = prev.target;
+
+                        // get common parent
+                        while(parent && !parent.contains(target)){
+                            parent = parent.parent;
+                        }
+
+                        // fire mouseleave for prev target (bubble until common parent)
+                        var element = prev.target;
+                        while(element !== parent){
+                            manager.fireDomEvent('mouseleave', {
+                                x: x,
+                                y: y,
+                                origin: origin,
+                                target: element
+                            });
+                            element = element.parent;
+                        }
+
+                        // fire mouseenter for current target (bubble until common parent)
+                        element = target;
+                        while(element !== parent){
+                            manager.fireDomEvent('mouseenter', {
+                                x: x,
+                                y: y,
+                                origin: origin,
+                                target: element
+                            });
+                            element = element.parent;
+                        }
+                    }
+
+                    // record target & event
+                    prev = {
+                        e: e,
+                        target: target
+                    };
+                });
             });
-        },
-        createElement: function(type, opt){
-            return Ielement.types[type] ? (new Ielement.types[type](this, opt)) : null;
+
         }
     });
 
-    window.Icanvas = Icanvas;
-})(this, $, Class);
+    // simulated dom manager class
+    var Canvas = util.EventEmitter.extend('Canvas', {
+        init: function(dom, type){
+            var canvas = this;
+
+            // real dom & canvas-ctx
+            canvas.dom = dom;
+            canvas.ctx = canvas.dom.getContext(type || '2d');
+
+            // canvas size
+            canvas.width = dom.width;
+            canvas.height = dom.height;
+
+            // simulated document
+            canvas.document = new DomManager({
+                dom: dom,
+                width: canvas.width,
+                height: canvas.height
+            });
+
+            // redraw while tree modify
+            var timer;
+            canvas.document.on('dom-event', function(e){
+                if(['attr-modify', 'subtree-modify'].indexOf(e.domEvent.type) >= 0){
+                    clearTimeout(timer);
+                    timer = setTimeout(function(){
+                        canvas.draw();
+                    }, 0);
+                }
+            });
+
+            canvas.draw();
+        },
+        // draw all elements on the canvas
+        draw: function(){
+            var canvas = this,
+                ctx = canvas.ctx;
+
+            // clean canvas
+            ctx.clearRect(0, 0, this.width, this.height)
+
+            // get the render sequence & render one by one
+            this.document.getRenderQueue().forEach(function(element){
+                element.getAttribute('visible') && element.draw(canvas);
+            });
+        },
+        // method to draw a rectangle
+        drawRectangle: function(x, y, w, h, style){
+            var ctx = this.ctx,
+                originStyle = ctx.fillStyle;
+
+            ctx.fillStyle = style;
+            ctx.fillRect(x, y, w, h);
+
+            ctx.fillStyle = originStyle;
+        },
+        // method to draw a circle
+        drawCircle: function(x, y, r, style){
+            var ctx = this.ctx,
+                originStyle = ctx.fillStyle;
+
+            ctx.fillStyle = style;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI*2, true);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = originStyle;
+        }
+    });
+
+    // method to extend dom element type
+    var createElementType = function(name, opt, base){
+        base = base ? Element.types[base] : Element;
+        opt.attr = $.extend(opt.attr, base.prototype.attr, true);
+        Element.types[name] = base.extend(name[0].toUpperCase() + name.slice(1), opt);
+    };
+
+    // simulated dom element class - rectangle
+    createElementType('rectangle', {
+        // realize rectangle-draw
+        draw: function(canvas){
+            var pos = this.getPos(),
+                attr = this.attr;
+
+            if(attr.border){
+                var borderWidth = attr['border-width'];
+                canvas.drawRectangle(pos.x - borderWidth, pos.y - borderWidth, attr.width + borderWidth * 2, attr.height + borderWidth * 2, attr.border);
+            }
+
+            if(attr.background){
+                canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, attr.background);
+            }
+
+            return this;
+        },
+        // realize rectangle-contain
+        containsPoint: function(x, y){
+            var pos = this.getPos(),
+                attr = this.attr,
+                borderWidth = attr.border ? attr['border-width'] : 0;
+            return (x >= pos.x - borderWidth && x <= pos.x + attr.width + borderWidth) &&
+                (y >= pos.y - borderWidth && y <= pos.y + attr.height + borderWidth);
+        }
+    });
+
+    // simulated dom element class - circle
+    createElementType('circle', {
+        attr: {
+            radius: 0                   // size - [ number(100) ]
+        },
+        // realize circle-draw
+        draw: function(canvas){
+            var pos = this.getPos(),
+                attr = this.attr;
+
+            if(attr.border){
+                var borderWidth = attr['border-width'];
+                canvas.drawCircle(pos.x, pos.y, attr.radius + borderWidth, attr.border);
+            }
+
+            if(attr.background){
+                canvas.drawCircle(pos.x, pos.y, attr.radius, attr.background);
+            }
+
+            return this;
+        },
+        // realize circle-contain
+        containsPoint: function(x, y){
+            var pos = this.getPos(),
+                attr = this.attr,
+                borderWidth = attr.border ? attr['border-width'] : 0;
+            var dd = Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2),
+                rr = Math.pow(attr.radius + borderWidth, 2);
+            return dd <= rr;
+        }
+    });
+
+    // export Canvas
+    window.Canvas = Canvas;
+
+})(this, $, Class, util);
