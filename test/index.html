@@ -15,7 +15,7 @@
 </head>
 <body>
 
-	<canvas id="canvas" width="400" height="400"></canvas>
+	<canvas id="canvas" width="800" height="800"></canvas>
 
 	<script type="text/javascript">
 	var canvas = $('#canvas');
@@ -46,10 +46,10 @@
 	var circle1 = doc.createElement('circle', {
 		top: 300,
 		left: 300,
-		radius: 0,
+		radius: 30,
 		background: 'blue',
 		border: 'yellow',
-		'border-width': 40
+		'border-width': 10
 	});
 
 	var circle2 = doc.createElement('circle', {
@@ -82,13 +82,13 @@
 		console.log('rec cliked', e);
 	})*/
 
-	/*['mouseenter', 'mouseleave'].forEach(function(eventName){
+	['mouseenter', 'mouseleave'].forEach(function(eventName){
 		[body, rec1, circle1, circle2].forEach(function(dom, i){
 			dom.on(eventName, function(e) {
 				console.log(i, eventName, e);
 			});
 		});
-	});*/
+	});
 
 	var movable = function(element){
 		var offsetX = 0;
@@ -96,21 +96,18 @@
 		var win = $(window);
 
 		var moveWith = function(e){
-			console.log('move', e.x, e.y);
 			element.setAttribute({
-				left: e.x - offsetX,
-				top: e.y - offsetY
+				left: e.offsetX - offsetX,
+				top: e.offsetY - offsetY
 			});
 		};
 
 		var endBind = function(e) {
-			console.log('end', e.x, e.y);
 			win.un('mousemove', moveWith);
 			win.un('mouseup', endBind);
 		};
 
 		element.on('mousedown', function(e) {
-			console.log('down', e.x, e.y);
 			e.stopPropagation();
 
 			offsetX = e.x - element.getAttribute('left');
@@ -121,9 +118,9 @@
 		});
 	};
 
-	movable(circle1);
+	/*movable(circle1);
 	movable(circle2);
-	movable(rec1);
+	movable(rec1);*/
 
 	</script>
 

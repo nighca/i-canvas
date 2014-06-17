@@ -1,5 +1,6 @@
 /*
  * main
+ * exports Canvas
  */
 
 (function(window, $, Class, util, undefined){
@@ -210,14 +211,24 @@
 
     // simulated dom manager class
     var DomManager = util.EventEmitter.extend('DomManager', {
-        init: function(dom){
+        init: function(opt){
             // real dom object
-            this.dom = dom;
+            this.dom = opt.dom;
+
+            // size
+            this.width = opt.width;
+            this.height = opt.height;
+
+            // real size & scale
+            this.clientWidth = this.dom.clientWidth;
+            this.clientHeight = this.dom.clientHeight;
+            this.scaleWidth = this.width / this.clientWidth;
+            this.scaleHeight = this.height / this.clientHeight;
 
             // body element, also dom tree root
             this.body = this.createElement('rectangle', {
-                width: dom.width,
-                height: dom.height,
+                width: this.width,
+                height: this.height,
                 background: 'red'
             });
 
@@ -279,8 +290,8 @@
             // these events can be directly delegated
             ['click', 'drag', 'drop', 'mousedown', 'mousemove', 'mouseup'].forEach(function(eventName){
                 dom.on(eventName, function(e){
-                    var x = e.offsetX,
-                        y = e.offsetY,
+                    var x = e.offsetX * manager.scaleWidth,
+                        y = e.offsetY * manager.scaleHeight,
                         origin = e;
 
                     var target;
@@ -295,7 +306,7 @@
                         }
                     }
 
-                    manager.fireDomEvent(eventName, {
+                    target && manager.fireDomEvent(eventName, {
                         x: x,
                         y: y,
                         origin: origin,
@@ -312,8 +323,8 @@
             // these three may cause 'mouseenter' or 'mouseleave'
             ['mouseenter', 'mousemove', 'mouseleave'].forEach(function(eventName){
                 dom.on(eventName, function(e){
-                    var x = e.offsetX,
-                        y = e.offsetY,
+                    var x = e.offsetX * manager.scaleWidth,
+                        y = e.offsetY * manager.scaleHeight,
                         origin = e;
 
                     var target;
@@ -387,7 +398,11 @@
             canvas.height = dom.height;
 
             // simulated document
-            canvas.document = new DomManager(dom);
+            canvas.document = new DomManager({
+                dom: dom,
+                width: canvas.width,
+                height: canvas.height
+            });
 
             // redraw while tree modify
             var timer;
