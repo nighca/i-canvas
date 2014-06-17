@@ -15,7 +15,7 @@
 </head>
 <body>
 
-	<canvas id="canvas" width="800" height="800"></canvas>
+	<canvas id="canvas" width="400" height="400"></canvas>
 
 	<script type="text/javascript">
 	var canvas = $('#canvas');
@@ -82,13 +82,13 @@
 		console.log('rec cliked', e);
 	})*/
 
-	['mouseenter', 'mouseleave'].forEach(function(eventName){
+	/*['mouseenter', 'mouseleave'].forEach(function(eventName){
 		[body, rec1, circle1, circle2].forEach(function(dom, i){
 			dom.on(eventName, function(e) {
 				console.log(i, eventName, e);
 			});
 		});
-	});
+	});*/
 
 	var movable = function(element){
 		var offsetX = 0;
@@ -118,9 +118,9 @@
 		});
 	};
 
-	/*movable(circle1);
+	movable(circle1);
 	movable(circle2);
-	movable(rec1);*/
+	movable(rec1);
 
 	</script>
 
