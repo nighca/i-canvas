@@ -2,8 +2,9 @@
 <html>
 <head>
 	<title></title>
-	<script type="text/javascript" src="https://rawgit.com/nighca/lib/master/lib.js"></script>
+	<script type="text/javascript" src="../lib/lib.js"></script>
 	<script type="text/javascript" src="../lib/class.js"></script>
+	<script type="text/javascript" src="../lib/util.js"></script>
 	<script type="text/javascript" src="../index.js"></script>
 	<style type="text/css">
 	#canvas{
@@ -14,29 +15,66 @@
 </head>
 <body>
 
-	<canvas id="canvas" width="400" height="400"></canvas>
+	<canvas id="canvas" width="800" height="800"></canvas>
 
 	<script type="text/javascript">
 	var canvas = $('#canvas');
 
-	var icanvas = new Icanvas(canvas, '2d');
+	/*canvas.on('mouseenter', function(e){
+		console.log(e);
+	});
 
-	var rec1 = icanvas.body.createChild('rectangle', {
+	canvas.on('mouseleave', function(e){
+		console.log(e);
+	});*/
+
+	var canvas = new Canvas(canvas, '2d');
+
+	var doc = canvas.document,
+		body = doc.body;
+
+	var rec1 = doc.createElement('rectangle', {
 		top: 100,
 		left: 100,
 		width: 100,
 		height: 100,
-		background: 'yellow'
+		background: 'yellow',
+		border: 'blue',
+		'border-width': 5
 	});
 
-	var circle1 = icanvas.body.createChild('circle', {
+	var circle1 = doc.createElement('circle', {
 		top: 300,
 		left: 300,
-		radius: 50,
-		background: 'blue'
+		radius: 30,
+		background: 'blue',
+		border: 'yellow',
+		'border-width': 10
 	});
 
-	/*icanvas.body.on('click', function(e) {
+	var circle2 = doc.createElement('circle', {
+		top: 50,
+		left: 50,
+		radius: 20,
+		background: 'green',
+		position: 'relative',
+		'z-index': 10
+	});
+
+    body.appendChild(rec1);
+    body.appendChild(circle1);
+    rec1.appendChild(circle2);
+
+	/*circle1.on('click', function(e){
+		body.createChild('circle', {
+			top: Math.random() * 400,
+			left: Math.random() * 400,
+			radius: Math.random() * 20,
+			background: 'white'
+		});
+	});
+*/
+	/*body.on('click', function(e) {
 		console.log('body cliked', e);
 	})
 
@@ -44,40 +82,45 @@
 		console.log('rec cliked', e);
 	})*/
 
-    /*['click', 'drag', 'drop', 'mousedown', 'mousemove', 'mouseup'].forEach(function(eventName){
-		circle1.on(eventName, function(e) {
-			e.stopPropagation();
-			console.log('circle', eventName, e);
-		})
-	});*/
+	['mouseenter', 'mouseleave'].forEach(function(eventName){
+		[body, rec1, circle1, circle2].forEach(function(dom, i){
+			dom.on(eventName, function(e) {
+				console.log(i, eventName, e);
+			});
+		});
+	});
 
 	var movable = function(element){
 		var offsetX = 0;
 		var offsetY = 0;
+		var win = $(window);
 
 		var moveWith = function(e){
 			element.setAttribute({
-				left: e.x - offsetX,
-				top: e.y - offsetY
+				left: e.offsetX - offsetX,
+				top: e.offsetY - offsetY
 			});
 		};
 
 		var endBind = function(e) {
-			icanvas.body.un('mousemove', moveWith);
-			icanvas.body.un('mouseup', endBind);
+			win.un('mousemove', moveWith);
+			win.un('mouseup', endBind);
 		};
 
 		element.on('mousedown', function(e) {
+			e.stopPropagation();
+
 			offsetX = e.x - element.getAttribute('left');
 			offsetY = e.y - element.getAttribute('top');
 
-			icanvas.body.on('mousemove', moveWith);
-			icanvas.body.on('mouseup', endBind);
+			win.on('mousemove', moveWith);
+			win.on('mouseup', endBind);
 		});
 	};
 
-	movable(circle1);
-	movable(rec1);
+	/*movable(circle1);
+	movable(circle2);
+	movable(rec1);*/
 
 	</script>
 
