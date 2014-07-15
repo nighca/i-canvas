@@ -3,7 +3,7 @@ Interactive-canvas
 
 ## About
 
-Lib for generate \& operate objects on canvas.
+Lib for generating \& operating objects on canvas.
 
 ## Features
 
