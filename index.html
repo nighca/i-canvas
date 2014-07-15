@@ -6,6 +6,7 @@
 	<script type="text/javascript" src="./lib/class.js"></script>
 	<script type="text/javascript" src="./lib/util.js"></script>
 	<script type="text/javascript" src="./index.js"></script>
+	<script type="text/javascript" src="./plugin/movable.js"></script>
 	<style type="text/css">
 	#canvas{
 		width: 400px;
@@ -18,19 +19,8 @@
 	<canvas id="canvas" width="400" height="400"></canvas>
 
 	<script type="text/javascript">
-	var canvas = $('#canvas');
-
-	/*canvas.on('mouseenter', function(e){
-		console.log(e);
-	});
-
-	canvas.on('mouseleave', function(e){
-		console.log(e);
-	});*/
-
-	var canvas = new Canvas(canvas, '2d');
-
-	var doc = canvas.document,
+	var canvas = new Canvas($('#canvas'), '2d'),
+		doc = canvas.document,
 		body = doc.body;
 
 	var rec1 = doc.createElement('rectangle', {
@@ -65,62 +55,9 @@
     body.appendChild(circle1);
     rec1.appendChild(circle2);
 
-	/*circle1.on('click', function(e){
-		body.createChild('circle', {
-			top: Math.random() * 400,
-			left: Math.random() * 400,
-			radius: Math.random() * 20,
-			background: 'white'
-		});
-	});
-*/
-	/*body.on('click', function(e) {
-		console.log('body cliked', e);
-	})
-
-	rec1.on('click', function(e) {
-		console.log('rec cliked', e);
-	})*/
-
-	/*['mouseenter', 'mouseleave'].forEach(function(eventName){
-		[body, rec1, circle1, circle2].forEach(function(dom, i){
-			dom.on(eventName, function(e) {
-				console.log(i, eventName, e);
-			});
-		});
-	});*/
-
-	var movable = function(element){
-		var offsetX = 0;
-		var offsetY = 0;
-		var win = $(window);
-
-		var moveWith = function(e){
-			element.setAttribute({
-				left: e.offsetX - offsetX,
-				top: e.offsetY - offsetY
-			});
-		};
-
-		var endBind = function(e) {
-			win.un('mousemove', moveWith);
-			win.un('mouseup', endBind);
-		};
-
-		element.on('mousedown', function(e) {
-			e.stopPropagation();
-
-			offsetX = e.x - element.getAttribute('left');
-			offsetY = e.y - element.getAttribute('top');
-
-			win.on('mousemove', moveWith);
-			win.on('mouseup', endBind);
-		});
-	};
-
-	movable(circle1);
-	movable(circle2);
-	movable(rec1);
+	circle1.movable();
+	circle2.movable();
+	rec1.movable();
 
 	</script>
 
