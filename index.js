@@ -456,14 +456,14 @@
     });
 
     // method to extend dom element type
-    var createElementType = function(name, opt, base){
+    var extendElementType = function(name, opt, base){
         base = base ? Element.types[base] : Element;
         opt.attr = $.extend(opt.attr, base.prototype.attr, true);
         Element.types[name] = base.extend(name[0].toUpperCase() + name.slice(1), opt);
     };
 
     // simulated dom element class - rectangle
-    createElementType('rectangle', {
+    extendElementType('rectangle', {
         // realize rectangle-draw
         draw: function(canvas){
             var pos = this.getPos(),
@@ -491,7 +491,7 @@
     });
 
     // simulated dom element class - circle
-    createElementType('circle', {
+    extendElementType('circle', {
         attr: {
             radius: 0                   // size - [ number(100) ]
         },
@@ -522,7 +522,20 @@
         }
     });
 
-    // export Canvas
-    window.Canvas = Canvas;
+    // method to extend dom element methods
+    var extendElementMethod = function(name, method){
+        return Element.prototype[name] = method;
+    };
+
+    // export
+
+    $.extend(Canvas, {
+        extendElementType: extendElementType,
+        extendElementMethod: extendElementMethod
+    }, true);
+
+    $.extend(window, {
+        Canvas: Canvas
+    }, true)
 
 })(this, $, Class, util);
