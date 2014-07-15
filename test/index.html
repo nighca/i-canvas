@@ -1,65 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title></title>
-	<script type="text/javascript" src="../lib/lib.js"></script>
-	<script type="text/javascript" src="../lib/class.js"></script>
-	<script type="text/javascript" src="../lib/util.js"></script>
-	<script type="text/javascript" src="../index.js"></script>
-	<script type="text/javascript" src="../plugin/movable.js"></script>
-	<style type="text/css">
-	#canvas{
-		width: 400px;
-		height: 400px;
-	}
-	</style>
+    <title></title>
+    <script type="text/javascript" src="../lib/lib.js"></script>
+    <script type="text/javascript" src="../lib/class.js"></script>
+    <script type="text/javascript" src="../lib/util.js"></script>
+    <script type="text/javascript" src="../index.js"></script>
+    <script type="text/javascript" src="../plugin/movable.js"></script>
+    <style type="text/css">
+    #canvas{
+        width: 400px;
+        height: 400px;
+    }
+    </style>
 </head>
 <body>
 
-	<canvas id="canvas" width="400" height="400"></canvas>
+    <canvas id="canvas" width="400" height="400"></canvas>
 
-	<script type="text/javascript">
-	var canvas = new Canvas($('#canvas'), '2d'),
-		doc = canvas.document,
-		body = doc.body;
+    <script type="text/javascript">
+    var canvas = new Canvas($('#canvas'), '2d'),
+        doc = canvas.document,
+        body = doc.body;
 
-	var rec1 = doc.createElement('rectangle', {
-		top: 100,
-		left: 100,
-		width: 100,
-		height: 100,
-		background: 'yellow',
-		border: 'blue',
-		'border-width': 5
-	});
+    var rec1 = doc.createElement('rectangle', {
+        top: 100,
+        left: 100,
+        width: 100,
+        height: 100,
+        background: 'yellow',
+        border: 'blue',
+        'border-width': 5
+    });
 
-	var circle1 = doc.createElement('circle', {
-		top: 300,
-		left: 300,
-		radius: 30,
-		background: 'blue',
-		border: 'yellow',
-		'border-width': 10
-	});
+    var circle1 = doc.createElement('circle', {
+        top: 300,
+        left: 300,
+        radius: 30,
+        background: 'blue',
+        border: 'yellow',
+        'border-width': 10
+    });
 
-	var circle2 = doc.createElement('circle', {
-		top: 50,
-		left: 50,
-		radius: 20,
-		background: 'green',
-		position: 'relative',
-		'z-index': 10
-	});
+    var circle2 = doc.createElement('circle', {
+        top: 50,
+        left: 50,
+        radius: 20,
+        background: 'green',
+        position: 'relative',
+        'z-index': 10
+    });
 
     body.appendChild(rec1);
     body.appendChild(circle1);
     rec1.appendChild(circle2);
 
-	circle1.movable();
-	circle2.movable();
-	rec1.movable();
+    circle1.movable();
+    circle2.movable();
+    rec1.movable();
 
-	</script>
+    </script>
 
 </body>
 </html>
