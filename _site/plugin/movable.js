@@ -5,7 +5,7 @@
  *  element.movable()
  */
 
-var Canvas = require('../core');
+var Canvas = require('../index');
 
 var movable = function(){
     var offsetX = 0,

@@ -1,0 +1,27 @@
+{
+  "name": "i-canvas",
+  "version": "0.0.1",
+  "description": "interactive canvas",
+  "keywords": [],
+  "homepage": "",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nighca/interactive-canvas.git"
+  },
+  "bugs": {
+    "url": ""
+  },
+  "licenses": "MIT",
+  "spm": {
+    "main": "index.js",
+    "dependencies": {
+    },
+    "devDependencies": {
+      "expect.js": "0.3.1"
+    },
+    "engines": {
+      "seajs": "2.3.0"
+    }
+  }
+}

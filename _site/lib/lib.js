@@ -68,18 +68,11 @@ extend($, {
     type: type,
     forEach: forEach,
     clone: clone,
-    extend: extend,
-    $: $$
+    extend: extend
 }, true);
 
-
-
-if(typeof module !== 'undefined' && module.exports){
-    module.exports = $;
-}else{
-    extend(window, {
-        $: $,
-        $$: $$
-    }, true);
-}
+extend(window, {
+    $: $,
+    $$: $$
+}, true);
 
