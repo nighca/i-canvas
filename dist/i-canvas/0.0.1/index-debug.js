@@ -1,35 +1,200 @@
-define("i-canvas/0.0.1/index-debug", ["i-canvas/0.0.1/core-debug", "i-canvas/0.0.1/plugin/movable-debug", "i-canvas/0.0.1/lib/lib-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/util-debug"], function(require, exports, module) {
+define("i-canvas/0.0.1/index-debug", ["i-canvas/0.0.1/core-debug", "i-canvas/0.0.1/element/rectangle-debug", "i-canvas/0.0.1/element/circle-debug", "i-canvas/0.0.1/plugin/movable-debug", "i-canvas/0.0.1/lib/canvas-debug", "i-canvas/0.0.1/lib/element-debug", "i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/dom-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/lib-debug"], function(require, exports, module) {
   /*
-   * core
-   * exports Canvas (with plugins)
+   * canvas
+   * exports Canvas
    */
+  // core
   var Canvas = require("i-canvas/0.0.1/core-debug");
+  // element types
+  require("i-canvas/0.0.1/element/rectangle-debug");
+  require("i-canvas/0.0.1/element/circle-debug");
+  // plugins
   require("i-canvas/0.0.1/plugin/movable-debug");
   module.exports = Canvas;
 });
-define("i-canvas/0.0.1/core-debug", ["i-canvas/0.0.1/lib/lib-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/util-debug"], function(require, exports, module) {
+define("i-canvas/0.0.1/core-debug", ["i-canvas/0.0.1/lib/canvas-debug", "i-canvas/0.0.1/lib/element-debug", "i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/dom-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/lib-debug"], function(require, exports, module) {
   /*
    * core
-   * exports Canvas
+   * exports Canvas core
    */
-  'use strict';
-  require("i-canvas/0.0.1/lib/lib-debug");
-  var Class = require("i-canvas/0.0.1/lib/class-debug");
-  var util = require("i-canvas/0.0.1/lib/util-debug");
-  // simulated dom-event class
-  var DomEvent = Class.extend('DomEvent', {
-    prevented: false,
-    stopped: false,
-    init: function(opt) {
-      $.extend(this, opt, true);
+  var Canvas = require("i-canvas/0.0.1/lib/canvas-debug");
+  var Element = require("i-canvas/0.0.1/lib/element-debug");
+  // export methods
+  $.extend(Canvas, {
+    extendElementType: Element.extendType,
+    extendElementMethod: Element.extendMethod
+  }, true);
+  module.exports = Canvas;
+});
+define("i-canvas/0.0.1/element/rectangle-debug", ["i-canvas/0.0.1/core-debug", "i-canvas/0.0.1/lib/canvas-debug", "i-canvas/0.0.1/lib/element-debug", "i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/dom-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/lib-debug"], function(require, exports, module) {
+  /*
+   * rectangle
+   *
+   * usage:
+   *  doc.createElement('rectangle', {...})
+   */
+  var Canvas = require("i-canvas/0.0.1/core-debug");
+  // simulated dom element class - rectangle
+  Canvas.extendElementType('rectangle', {
+    // realize rectangle-draw
+    draw: function(canvas) {
+      var pos = this.getPos(),
+        attr = this.attr;
+      if (attr.border) {
+        var borderWidth = attr['border-width'];
+        canvas.drawRectangle(pos.x - borderWidth, pos.y - borderWidth, attr.width + borderWidth * 2, attr.height + borderWidth * 2, attr.border);
+      }
+      if (attr.background) {
+        canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, attr.background);
+      }
+      return this;
     },
-    preventDefault: function() {
-      this.prevented = true;
-    },
-    stopPropagation: function() {
-      this.stopped = true;
+    // realize rectangle-contain
+    containsPoint: function(x, y) {
+      var pos = this.getPos(),
+        attr = this.attr,
+        borderWidth = attr.border ? attr['border-width'] : 0;
+      return (x >= pos.x - borderWidth && x <= pos.x + attr.width + borderWidth) && (y >= pos.y - borderWidth && y <= pos.y + attr.height + borderWidth);
     }
   });
+});
+define("i-canvas/0.0.1/element/circle-debug", ["i-canvas/0.0.1/core-debug", "i-canvas/0.0.1/lib/canvas-debug", "i-canvas/0.0.1/lib/element-debug", "i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/dom-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/lib-debug"], function(require, exports, module) {
+  /*
+   * circle
+   *
+   * usage:
+   *  doc.createElement('circle', {...})
+   */
+  var Canvas = require("i-canvas/0.0.1/core-debug");
+  // simulated dom element class - circle
+  Canvas.extendElementType('circle', {
+    attr: {
+      radius: 0 // size - [ number(100) ]
+    },
+    // realize circle-draw
+    draw: function(canvas) {
+      var pos = this.getPos(),
+        attr = this.attr;
+      if (attr.border) {
+        var borderWidth = attr['border-width'];
+        canvas.drawCircle(pos.x, pos.y, attr.radius + borderWidth, attr.border);
+      }
+      if (attr.background) {
+        canvas.drawCircle(pos.x, pos.y, attr.radius, attr.background);
+      }
+      return this;
+    },
+    // realize circle-contain
+    containsPoint: function(x, y) {
+      var pos = this.getPos(),
+        attr = this.attr,
+        borderWidth = attr.border ? attr['border-width'] : 0;
+      var dd = Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2),
+        rr = Math.pow(attr.radius + borderWidth, 2);
+      return dd <= rr;
+    }
+  });
+});
+define("i-canvas/0.0.1/plugin/movable-debug", ["i-canvas/0.0.1/core-debug", "i-canvas/0.0.1/lib/canvas-debug", "i-canvas/0.0.1/lib/element-debug", "i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/dom-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/lib-debug"], function(require, exports, module) {
+  /*
+   * movable
+   *
+   * usage:
+   *  element.movable()
+   */
+  var Canvas = require("i-canvas/0.0.1/core-debug");
+  var movable = function() {
+    var offsetX = 0,
+      offsetY = 0;
+    var win = $(window),
+      element = this;
+    var moveWith = function(e) {
+      element.setAttribute({
+        left: e.offsetX - offsetX,
+        top: e.offsetY - offsetY
+      });
+    };
+    var endBind = function(e) {
+      win.un('mousemove', moveWith);
+      win.un('mouseup', endBind);
+    };
+    element.on('mousedown', function(e) {
+      e.stopPropagation();
+      offsetX = e.x - element.getAttribute('left');
+      offsetY = e.y - element.getAttribute('top');
+      win.on('mousemove', moveWith);
+      win.on('mouseup', endBind);
+    });
+  };
+  Canvas.extendElementMethod('movable', movable);
+});
+define("i-canvas/0.0.1/lib/canvas-debug", ["i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/dom-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/lib-debug", "i-canvas/0.0.1/lib/element-debug"], function(require, exports, module) {
+  var util = require("i-canvas/0.0.1/lib/util-debug");
+  var DomManager = require("i-canvas/0.0.1/lib/dom-debug");
+  // simulated dom manager class
+  var Canvas = util.EventEmitter.extend('Canvas', {
+    init: function(dom, type) {
+      var canvas = this;
+      // real dom & canvas-ctx
+      canvas.dom = dom;
+      canvas.ctx = canvas.dom.getContext(type || '2d');
+      // canvas size
+      canvas.width = dom.width;
+      canvas.height = dom.height;
+      // simulated document
+      canvas.document = new DomManager({
+        dom: dom,
+        width: canvas.width,
+        height: canvas.height
+      });
+      // redraw while tree modify
+      var timer;
+      canvas.document.on('dom-event', function(e) {
+        if (['attr-modify', 'subtree-modify'].indexOf(e.domEvent.type) >= 0) {
+          clearTimeout(timer);
+          timer = setTimeout(function() {
+            canvas.draw();
+          }, 0);
+        }
+      });
+      canvas.draw();
+    },
+    // draw all elements on the canvas
+    draw: function() {
+      var canvas = this,
+        ctx = canvas.ctx;
+      // clean canvas
+      ctx.clearRect(0, 0, this.width, this.height)
+      // get the render sequence & render one by one
+      this.document.getRenderQueue().forEach(function(element) {
+        element.getAttribute('visible') && element.draw(canvas);
+      });
+    },
+    // method to draw a rectangle
+    drawRectangle: function(x, y, w, h, style) {
+      var ctx = this.ctx,
+        originStyle = ctx.fillStyle;
+      ctx.fillStyle = style;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = originStyle;
+    },
+    // method to draw a circle
+    drawCircle: function(x, y, r, style) {
+      var ctx = this.ctx,
+        originStyle = ctx.fillStyle;
+      ctx.fillStyle = style;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = originStyle;
+    }
+  });
+  module.exports = Canvas;
+});
+define("i-canvas/0.0.1/lib/element-debug", ["i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/lib-debug", "i-canvas/0.0.1/lib/class-debug"], function(require, exports, module) {
+  var util = require("i-canvas/0.0.1/lib/util-debug");
+  var $ = require("i-canvas/0.0.1/lib/lib-debug");
   // simulated dom element base class
   var Element = util.EventEmitter.extend('Element', {
     // default attribute values
@@ -196,7 +361,143 @@ define("i-canvas/0.0.1/core-debug", ["i-canvas/0.0.1/lib/lib-debug", "i-canvas/0
     }
   });
   // types of element [rectangle, circle, ...]
-  Element.types = {};
+  var types = {};
+  // method to extend dom element type
+  var extendType = function(name, opt, base) {
+    base = base ? Element.types[base] : Element;
+    opt.attr = $.extend(opt.attr, base.prototype.attr, true);
+    Element.types[name] = base.extend(name[0].toUpperCase() + name.slice(1), opt);
+  };
+  // method to extend dom element methods
+  var extendMethod = function(name, method) {
+    return Element.prototype[name] = method;
+  };
+  $.extend(Element, {
+    types: {},
+    extendType: extendType,
+    extendMethod: extendMethod
+  }, true);
+  module.exports = Element;
+});
+define("i-canvas/0.0.1/lib/util-debug", ["i-canvas/0.0.1/lib/class-debug"], function(require, exports, module) {
+  /*
+   * helper methods
+   * exports util
+   */
+  'use strict';
+  var Class = require("i-canvas/0.0.1/lib/class-debug");
+  // merge sort realization
+  // tips: array.prototype.sort is stable in some browsers(e.g. firefox) while unstable in some others(e.g. chrome)
+  //       such result is not (maybe also will not be) ensured
+  var stableSort = function(arr, fn) {
+    var l = arr.length;
+    switch (l) {
+      case 0:
+      case 1:
+        return arr;
+      case 2:
+        // faster than call recursively
+        return fn(arr[0], arr[1]) ? [arr[1], arr[0]] : arr;
+      default:
+        var pos = Math.floor(l / 2),
+          l1 = pos,
+          l2 = l - pos,
+          arr1 = stableSort(arr.slice(0, pos), fn),
+          arr2 = stableSort(arr.slice(pos), fn);
+        arr = [];
+        for (var i = 0, j = 0; i <= l1 - 1 || j <= l2 - 1;) {
+          if (i > l1 - 1) {
+            arr.push(arr2[j++]);
+          } else if (j > l2 - 1) {
+            arr.push(arr1[i++]);
+          } else {
+            if (fn(arr1[i], arr2[j])) {
+              arr.push(arr2[j++]);
+            } else {
+              arr.push(arr1[i++]);
+            }
+          }
+        }
+        return arr;
+    }
+  };
+  // event emitter class
+  var EventEmitter = Class.extend('EventEmitter', {
+    on: function(name, handler) {
+      name = name.toLowerCase();
+      var list = this.__eventGetList__();
+      (list[name] = list[name] || []).push(handler);
+      return this;
+    },
+    un: function(name, handler) {
+      name = name.toLowerCase();
+      var list = this.__eventGetList__(),
+        handlers = list[name];
+      if (handlers) {
+        if (!handler) {
+          list[name] = null;
+        }
+        var remaining = [];
+        for (var i = 0, len = handlers.length; i < len; i++) {
+          if (handlers[i] !== handler) {
+            remaining.push(handlers[i]);
+          }
+        }
+        list[name] = remaining.length ? remaining : null;
+      }
+      return this;
+    },
+    fire: function(name, data) {
+      if (Object.prototype.toString.call(name) === '[object Object]' && name.type && !data) {
+        data = name;
+        name = data.type;
+      }
+      name = name.toLowerCase();
+      var list = this.__eventGetList__(),
+        handlers = list[name];
+      if (handlers) {
+        for (var i = 0, len = handlers.length; i < len; i++) {
+          try {
+            handlers[i].call(this, data);
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      }
+      return this;
+    },
+    __eventGetList__: function() {
+      if (!this.__eventList__) {
+        this.__eventList__ = {};
+      }
+      return this.__eventList__;
+    }
+  });
+  // export
+  module.exports = {
+    stableSort: stableSort,
+    EventEmitter: EventEmitter
+  };
+});
+define("i-canvas/0.0.1/lib/dom-debug", ["i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/util-debug", "i-canvas/0.0.1/lib/lib-debug", "i-canvas/0.0.1/lib/element-debug"], function(require, exports, module) {
+  var Class = require("i-canvas/0.0.1/lib/class-debug");
+  var util = require("i-canvas/0.0.1/lib/util-debug");
+  var $ = require("i-canvas/0.0.1/lib/lib-debug");
+  var Element = require("i-canvas/0.0.1/lib/element-debug");
+  // simulated dom-event class
+  var DomEvent = Class.extend('DomEvent', {
+    prevented: false,
+    stopped: false,
+    init: function(opt) {
+      $.extend(this, opt, true);
+    },
+    preventDefault: function() {
+      this.prevented = true;
+    },
+    stopPropagation: function() {
+      this.stopped = true;
+    }
+  });
   // simulated dom manager class
   var DomManager = util.EventEmitter.extend('DomManager', {
     init: function(opt) {
@@ -342,165 +643,65 @@ define("i-canvas/0.0.1/core-debug", ["i-canvas/0.0.1/lib/lib-debug", "i-canvas/0
       });
     }
   });
-  // simulated dom manager class
-  var Canvas = util.EventEmitter.extend('Canvas', {
-    init: function(dom, type) {
-      var canvas = this;
-      // real dom & canvas-ctx
-      canvas.dom = dom;
-      canvas.ctx = canvas.dom.getContext(type || '2d');
-      // canvas size
-      canvas.width = dom.width;
-      canvas.height = dom.height;
-      // simulated document
-      canvas.document = new DomManager({
-        dom: dom,
-        width: canvas.width,
-        height: canvas.height
-      });
-      // redraw while tree modify
-      var timer;
-      canvas.document.on('dom-event', function(e) {
-        if (['attr-modify', 'subtree-modify'].indexOf(e.domEvent.type) >= 0) {
-          clearTimeout(timer);
-          timer = setTimeout(function() {
-            canvas.draw();
-          }, 0);
-        }
-      });
-      canvas.draw();
-    },
-    // draw all elements on the canvas
-    draw: function() {
-      var canvas = this,
-        ctx = canvas.ctx;
-      // clean canvas
-      ctx.clearRect(0, 0, this.width, this.height)
-      // get the render sequence & render one by one
-      this.document.getRenderQueue().forEach(function(element) {
-        element.getAttribute('visible') && element.draw(canvas);
-      });
-    },
-    // method to draw a rectangle
-    drawRectangle: function(x, y, w, h, style) {
-      var ctx = this.ctx,
-        originStyle = ctx.fillStyle;
-      ctx.fillStyle = style;
-      ctx.fillRect(x, y, w, h);
-      ctx.fillStyle = originStyle;
-    },
-    // method to draw a circle
-    drawCircle: function(x, y, r, style) {
-      var ctx = this.ctx,
-        originStyle = ctx.fillStyle;
-      ctx.fillStyle = style;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2, true);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = originStyle;
-    }
-  });
-  // method to extend dom element type
-  var extendElementType = function(name, opt, base) {
-    base = base ? Element.types[base] : Element;
-    opt.attr = $.extend(opt.attr, base.prototype.attr, true);
-    Element.types[name] = base.extend(name[0].toUpperCase() + name.slice(1), opt);
-  };
-  // simulated dom element class - rectangle
-  extendElementType('rectangle', {
-    // realize rectangle-draw
-    draw: function(canvas) {
-      var pos = this.getPos(),
-        attr = this.attr;
-      if (attr.border) {
-        var borderWidth = attr['border-width'];
-        canvas.drawRectangle(pos.x - borderWidth, pos.y - borderWidth, attr.width + borderWidth * 2, attr.height + borderWidth * 2, attr.border);
-      }
-      if (attr.background) {
-        canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, attr.background);
-      }
-      return this;
-    },
-    // realize rectangle-contain
-    containsPoint: function(x, y) {
-      var pos = this.getPos(),
-        attr = this.attr,
-        borderWidth = attr.border ? attr['border-width'] : 0;
-      return (x >= pos.x - borderWidth && x <= pos.x + attr.width + borderWidth) && (y >= pos.y - borderWidth && y <= pos.y + attr.height + borderWidth);
-    }
-  });
-  // simulated dom element class - circle
-  extendElementType('circle', {
-    attr: {
-      radius: 0 // size - [ number(100) ]
-    },
-    // realize circle-draw
-    draw: function(canvas) {
-      var pos = this.getPos(),
-        attr = this.attr;
-      if (attr.border) {
-        var borderWidth = attr['border-width'];
-        canvas.drawCircle(pos.x, pos.y, attr.radius + borderWidth, attr.border);
-      }
-      if (attr.background) {
-        canvas.drawCircle(pos.x, pos.y, attr.radius, attr.background);
-      }
-      return this;
-    },
-    // realize circle-contain
-    containsPoint: function(x, y) {
-      var pos = this.getPos(),
-        attr = this.attr,
-        borderWidth = attr.border ? attr['border-width'] : 0;
-      var dd = Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2),
-        rr = Math.pow(attr.radius + borderWidth, 2);
-      return dd <= rr;
-    }
-  });
-  // method to extend dom element methods
-  var extendElementMethod = function(name, method) {
-    return Element.prototype[name] = method;
-  };
-  // export
-  $.extend(Canvas, {
-    extendElementType: extendElementType,
-    extendElementMethod: extendElementMethod
-  }, true);
-  module.exports = Canvas;
+  module.exports = DomManager;
 });
-define("i-canvas/0.0.1/plugin/movable-debug", ["i-canvas/0.0.1/core-debug", "i-canvas/0.0.1/lib/lib-debug", "i-canvas/0.0.1/lib/class-debug", "i-canvas/0.0.1/lib/util-debug"], function(require, exports, module) {
-  /*
-   * movable
-   *
-   * usage:
-   *  element.movable()
+define("i-canvas/0.0.1/lib/class-debug", [], function(require, exports, module) {
+  /* Simple JavaScript Inheritance
+   * By John Resig http://ejohn.org/
+   * MIT Licensed.
    */
-  var Canvas = require("i-canvas/0.0.1/core-debug");
-  var movable = function() {
-    var offsetX = 0,
-      offsetY = 0;
-    var win = $(window),
-      element = this;
-    var moveWith = function(e) {
-      element.setAttribute({
-        left: e.offsetX - offsetX,
-        top: e.offsetY - offsetY
-      });
-    };
-    var endBind = function(e) {
-      win.un('mousemove', moveWith);
-      win.un('mouseup', endBind);
-    };
-    element.on('mousedown', function(e) {
-      e.stopPropagation();
-      offsetX = e.x - element.getAttribute('left');
-      offsetY = e.y - element.getAttribute('top');
-      win.on('mousemove', moveWith);
-      win.on('mouseup', endBind);
-    });
+  // Inspired by base2 and Prototype
+  // Updated by nighca for some personal usage
+  // exports Class
+  var initializing = false,
+    fnTest = /xyz/.test(function() {
+      xyz;
+    }) ? /\b_super\b/ : /.*/;
+  // The base Class implementation (does nothing)
+  this.Class = function() {};
+  // Create a new Class that inherits from this class
+  Class.extend = function(className, prop) {
+    if (!prop) {
+      prop = className;
+      className = 'Anonymous';
+    }
+    var _super = this.prototype;
+    // Instantiate a base class (but only create the instance,
+    // don't run the init constructor)
+    initializing = true;
+    var prototype = new this();
+    initializing = false;
+    // Copy the properties over onto the new prototype
+    for (var name in prop) {
+      // Check if we're overwriting an existing function
+      prototype[name] = typeof prop[name] == "function" && typeof _super[name] == "function" && fnTest.test(prop[name]) ? (function(name, fn) {
+        return function() {
+          var tmp = this._super;
+          // Add a new ._super() method that is the same method
+          // but on the super-class
+          this._super = _super[name];
+          // The method only need to be bound temporarily, so we
+          // remove it when we're done executing
+          var ret = fn.apply(this, arguments);
+          this._super = tmp;
+          return ret;
+        };
+      })(name, prop[name]) : prop[name];
+    }
+    // The dummy class constructor
+    var Class = eval('(function ' + className + '() {\
+    if ( !initializing && this.init )\
+      this.init.apply(this, arguments);\
+  })');
+    // Populate our constructed prototype object
+    Class.prototype = prototype;
+    // Enforce the constructor to be what we expect
+    Class.prototype.constructor = Class;
+    // And make this class extendable
+    Class.extend = arguments.callee;
+    return Class;
   };
-  Canvas.extendElementMethod('movable', movable);
+  module.exports = Class;
 });
 define("i-canvas/0.0.1/lib/lib-debug", [], function(require, exports, module) {
   /*
@@ -569,168 +770,15 @@ define("i-canvas/0.0.1/lib/lib-debug", [], function(require, exports, module) {
     type: type,
     forEach: forEach,
     clone: clone,
-    extend: extend
+    extend: extend,
+    $: $$
   }, true);
-  extend(window, {
-    $: $,
-    $$: $$
-  }, true);
-});
-define("i-canvas/0.0.1/lib/class-debug", [], function(require, exports, module) {
-  /* Simple JavaScript Inheritance
-   * By John Resig http://ejohn.org/
-   * MIT Licensed.
-   */
-  // Inspired by base2 and Prototype
-  // Updated by nighca for some personal usage
-  // exports Class
-  var initializing = false,
-    fnTest = /xyz/.test(function() {
-      xyz;
-    }) ? /\b_super\b/ : /.*/;
-  // The base Class implementation (does nothing)
-  this.Class = function() {};
-  // Create a new Class that inherits from this class
-  Class.extend = function(className, prop) {
-    if (!prop) {
-      prop = className;
-      className = 'Anonymous';
-    }
-    var _super = this.prototype;
-    // Instantiate a base class (but only create the instance,
-    // don't run the init constructor)
-    initializing = true;
-    var prototype = new this();
-    initializing = false;
-    // Copy the properties over onto the new prototype
-    for (var name in prop) {
-      // Check if we're overwriting an existing function
-      prototype[name] = typeof prop[name] == "function" && typeof _super[name] == "function" && fnTest.test(prop[name]) ? (function(name, fn) {
-        return function() {
-          var tmp = this._super;
-          // Add a new ._super() method that is the same method
-          // but on the super-class
-          this._super = _super[name];
-          // The method only need to be bound temporarily, so we
-          // remove it when we're done executing
-          var ret = fn.apply(this, arguments);
-          this._super = tmp;
-          return ret;
-        };
-      })(name, prop[name]) : prop[name];
-    }
-    // The dummy class constructor
-    var Class = eval('(function ' + className + '() {\
-    if ( !initializing && this.init )\
-      this.init.apply(this, arguments);\
-  })');
-    // Populate our constructed prototype object
-    Class.prototype = prototype;
-    // Enforce the constructor to be what we expect
-    Class.prototype.constructor = Class;
-    // And make this class extendable
-    Class.extend = arguments.callee;
-    return Class;
-  };
-  module.exports = Class;
-});
-define("i-canvas/0.0.1/lib/util-debug", ["i-canvas/0.0.1/lib/class-debug"], function(require, exports, module) {
-  /*
-   * helper methods
-   * exports util
-   */
-  'use strict';
-  var Class = require("i-canvas/0.0.1/lib/class-debug");
-  // merge sort realization
-  // tips: array.prototype.sort is stable in some browsers(e.g. firefox) while unstable in some others(e.g. chrome)
-  //       such result is not (maybe also will not be) ensured
-  var stableSort = function(arr, fn) {
-    var l = arr.length;
-    switch (l) {
-      case 0:
-      case 1:
-        return arr;
-      case 2:
-        // faster than call recursively
-        return fn(arr[0], arr[1]) ? [arr[1], arr[0]] : arr;
-      default:
-        var pos = Math.floor(l / 2),
-          l1 = pos,
-          l2 = l - pos,
-          arr1 = stableSort(arr.slice(0, pos), fn),
-          arr2 = stableSort(arr.slice(pos), fn);
-        arr = [];
-        for (var i = 0, j = 0; i <= l1 - 1 || j <= l2 - 1;) {
-          if (i > l1 - 1) {
-            arr.push(arr2[j++]);
-          } else if (j > l2 - 1) {
-            arr.push(arr1[i++]);
-          } else {
-            if (fn(arr1[i], arr2[j])) {
-              arr.push(arr2[j++]);
-            } else {
-              arr.push(arr1[i++]);
-            }
-          }
-        }
-        return arr;
-    }
-  };
-  // event emitter class
-  var EventEmitter = Class.extend('EventEmitter', {
-    on: function(name, handler) {
-      name = name.toLowerCase();
-      var list = this.__eventGetList__();
-      (list[name] = list[name] || []).push(handler);
-      return this;
-    },
-    un: function(name, handler) {
-      name = name.toLowerCase();
-      var list = this.__eventGetList__(),
-        handlers = list[name];
-      if (handlers) {
-        if (!handler) {
-          list[name] = null;
-        }
-        var remaining = [];
-        for (var i = 0, len = handlers.length; i < len; i++) {
-          if (handlers[i] !== handler) {
-            remaining.push(handlers[i]);
-          }
-        }
-        list[name] = remaining.length ? remaining : null;
-      }
-      return this;
-    },
-    fire: function(name, data) {
-      if (Object.prototype.toString.call(name) === '[object Object]' && name.type && !data) {
-        data = name;
-        name = data.type;
-      }
-      name = name.toLowerCase();
-      var list = this.__eventGetList__(),
-        handlers = list[name];
-      if (handlers) {
-        for (var i = 0, len = handlers.length; i < len; i++) {
-          try {
-            handlers[i].call(this, data);
-          } catch (e) {
-            console.warn(e);
-          }
-        }
-      }
-      return this;
-    },
-    __eventGetList__: function() {
-      if (!this.__eventList__) {
-        this.__eventList__ = {};
-      }
-      return this.__eventList__;
-    }
-  });
-  // export
-  module.exports = {
-    stableSort: stableSort,
-    EventEmitter: EventEmitter
-  };
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = $;
+  } else {
+    extend(window, {
+      $: $,
+      $$: $$
+    }, true);
+  }
 });

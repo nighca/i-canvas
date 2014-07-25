@@ -1,5 +1,6 @@
-var Canvas = require('../index');
-require('../plugin/movable');
+define(function(require, exports, module){
+
+var Canvas = require('i-canvas');
 
 var canvas = new Canvas($('#canvas'), '2d'),
     doc = canvas.document,
@@ -40,3 +41,5 @@ rec1.appendChild(circle2);
 circle1.movable();
 circle2.movable();
 rec1.movable();
+
+});

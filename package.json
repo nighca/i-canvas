@@ -21,8 +21,7 @@
       "expect.js": "0.3.1"
     },
     "engines": {
-      "seajs": "2.2.1"
-    },
-    "tests": "tests/*.js"
+      "seajs": "2.3.0"
+    }
   }
 }
