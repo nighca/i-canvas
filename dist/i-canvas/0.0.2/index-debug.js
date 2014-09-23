@@ -1,24 +1,24 @@
-define("i-canvas/0.0.1/index-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/index-debug", [], function(require, exports, module) {
   /*
    * canvas
    * exports Canvas
    */
   // core
-  var Canvas = require("i-canvas/0.0.1/core-debug");
+  var Canvas = require("i-canvas/0.0.2/core-debug");
   // element types
-  require("i-canvas/0.0.1/element/rectangle-debug");
-  require("i-canvas/0.0.1/element/circle-debug");
+  require("i-canvas/0.0.2/element/rectangle-debug");
+  require("i-canvas/0.0.2/element/circle-debug");
   // plugins
-  require("i-canvas/0.0.1/plugin/movable-debug");
+  require("i-canvas/0.0.2/plugin/movable-debug");
   module.exports = Canvas;
 });
-define("i-canvas/0.0.1/core-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/core-debug", [], function(require, exports, module) {
   /*
    * core
    * exports Canvas core
    */
-  var Canvas = require("i-canvas/0.0.1/lib/canvas-debug");
-  var Element = require("i-canvas/0.0.1/lib/element-debug");
+  var Canvas = require("i-canvas/0.0.2/lib/canvas-debug");
+  var Element = require("i-canvas/0.0.2/lib/element-debug");
   // export methods
   $.extend(Canvas, {
     extendElementType: Element.extendType,
@@ -26,9 +26,9 @@ define("i-canvas/0.0.1/core-debug", [], function(require, exports, module) {
   }, true);
   module.exports = Canvas;
 });
-define("i-canvas/0.0.1/lib/canvas-debug", [], function(require, exports, module) {
-  var util = require("i-canvas/0.0.1/lib/util-debug");
-  var DomManager = require("i-canvas/0.0.1/lib/dom-debug");
+define("i-canvas/0.0.2/lib/canvas-debug", [], function(require, exports, module) {
+  var util = require("i-canvas/0.0.2/lib/util-debug");
+  var DomManager = require("i-canvas/0.0.2/lib/dom-debug");
   // simulated dom manager class
   var Canvas = util.EventEmitter.extend('Canvas', {
     init: function(dom, type) {
@@ -90,13 +90,13 @@ define("i-canvas/0.0.1/lib/canvas-debug", [], function(require, exports, module)
   });
   module.exports = Canvas;
 });
-define("i-canvas/0.0.1/lib/util-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/lib/util-debug", [], function(require, exports, module) {
   /*
    * helper methods
    * exports util
    */
   'use strict';
-  var Class = require("i-canvas/0.0.1/lib/class-debug");
+  var Class = require("i-canvas/0.0.2/lib/class-debug");
   // merge sort realization
   // tips: array.prototype.sort is stable in some browsers(e.g. firefox) while unstable in some others(e.g. chrome)
   //       such result is not (maybe also will not be) ensured
@@ -190,7 +190,7 @@ define("i-canvas/0.0.1/lib/util-debug", [], function(require, exports, module) {
     EventEmitter: EventEmitter
   };
 });
-define("i-canvas/0.0.1/lib/class-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/lib/class-debug", [], function(require, exports, module) {
   /* Simple JavaScript Inheritance
    * By John Resig http://ejohn.org/
    * MIT Licensed.
@@ -248,11 +248,11 @@ define("i-canvas/0.0.1/lib/class-debug", [], function(require, exports, module) 
   };
   module.exports = Class;
 });
-define("i-canvas/0.0.1/lib/dom-debug", [], function(require, exports, module) {
-  var Class = require("i-canvas/0.0.1/lib/class-debug");
-  var util = require("i-canvas/0.0.1/lib/util-debug");
-  var $ = require("i-canvas/0.0.1/lib/lib-debug");
-  var Element = require("i-canvas/0.0.1/lib/element-debug");
+define("i-canvas/0.0.2/lib/dom-debug", [], function(require, exports, module) {
+  var Class = require("i-canvas/0.0.2/lib/class-debug");
+  var util = require("i-canvas/0.0.2/lib/util-debug");
+  var $ = require("i-canvas/0.0.2/lib/lib-debug");
+  var Element = require("i-canvas/0.0.2/lib/element-debug");
   // simulated dom-event class
   var DomEvent = Class.extend('DomEvent', {
     prevented: false,
@@ -457,7 +457,7 @@ define("i-canvas/0.0.1/lib/dom-debug", [], function(require, exports, module) {
   });
   module.exports = DomManager;
 });
-define("i-canvas/0.0.1/lib/lib-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/lib/lib-debug", [], function(require, exports, module) {
   /*
    * https://github.com/nighca/lib
    * exports lib
@@ -536,9 +536,9 @@ define("i-canvas/0.0.1/lib/lib-debug", [], function(require, exports, module) {
     }, true);
   }
 });
-define("i-canvas/0.0.1/lib/element-debug", [], function(require, exports, module) {
-  var util = require("i-canvas/0.0.1/lib/util-debug");
-  var $ = require("i-canvas/0.0.1/lib/lib-debug");
+define("i-canvas/0.0.2/lib/element-debug", [], function(require, exports, module) {
+  var util = require("i-canvas/0.0.2/lib/util-debug");
+  var $ = require("i-canvas/0.0.2/lib/lib-debug");
   // simulated dom element base class
   var Element = util.EventEmitter.extend('Element', {
     // default attribute values
@@ -723,14 +723,14 @@ define("i-canvas/0.0.1/lib/element-debug", [], function(require, exports, module
   }, true);
   module.exports = Element;
 });
-define("i-canvas/0.0.1/element/rectangle-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/element/rectangle-debug", [], function(require, exports, module) {
   /*
    * rectangle
    *
    * usage:
    *  doc.createElement('rectangle', {...})
    */
-  var Canvas = require("i-canvas/0.0.1/core-debug");
+  var Canvas = require("i-canvas/0.0.2/core-debug");
   // simulated dom element class - rectangle
   Canvas.extendElementType('rectangle', {
     // realize rectangle-draw
@@ -755,14 +755,14 @@ define("i-canvas/0.0.1/element/rectangle-debug", [], function(require, exports, 
     }
   });
 });
-define("i-canvas/0.0.1/element/circle-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/element/circle-debug", [], function(require, exports, module) {
   /*
    * circle
    *
    * usage:
    *  doc.createElement('circle', {...})
    */
-  var Canvas = require("i-canvas/0.0.1/core-debug");
+  var Canvas = require("i-canvas/0.0.2/core-debug");
   // simulated dom element class - circle
   Canvas.extendElementType('circle', {
     attr: {
@@ -792,14 +792,14 @@ define("i-canvas/0.0.1/element/circle-debug", [], function(require, exports, mod
     }
   });
 });
-define("i-canvas/0.0.1/plugin/movable-debug", [], function(require, exports, module) {
+define("i-canvas/0.0.2/plugin/movable-debug", [], function(require, exports, module) {
   /*
    * movable
    *
    * usage:
    *  element.movable()
    */
-  var Canvas = require("i-canvas/0.0.1/core-debug");
+  var Canvas = require("i-canvas/0.0.2/core-debug");
   var movable = function(mode) {
     mode = mode || 'mobile';
     var offsetX = 0,
@@ -813,7 +813,7 @@ define("i-canvas/0.0.1/plugin/movable-debug", [], function(require, exports, mod
       move: 'mousemove',
       end: 'mouseup'
     };
-    var canvas = this.document.body,
+    var body = this.document.body,
       element = this;
     var moveWith = function(e) {
       if (mode === 'mobile') {
@@ -825,8 +825,8 @@ define("i-canvas/0.0.1/plugin/movable-debug", [], function(require, exports, mod
       });
     };
     var endBind = function(e) {
-      canvas.un(events.move, moveWith);
-      canvas.un(events.end, endBind);
+      body.un(events.move, moveWith);
+      body.un(events.end, endBind);
     };
     element.on(events.begin, function(e) {
       e.stopPropagation();
@@ -835,8 +835,8 @@ define("i-canvas/0.0.1/plugin/movable-debug", [], function(require, exports, mod
       }
       offsetX = e.x - element.getAttribute('left');
       offsetY = e.y - element.getAttribute('top');
-      canvas.on(events.move, moveWith);
-      canvas.on(events.end, endBind);
+      body.on(events.move, moveWith);
+      body.on(events.end, endBind);
     });
   };
   Canvas.extendElementMethod('movable', movable);

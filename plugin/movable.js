@@ -7,33 +7,55 @@
 
 var Canvas = require('../core');
 
-var movable = function(){
+var movable = function(mode){
+    mode = mode || 'mobile';
+
     var offsetX = 0,
         offsetY = 0;
 
-    var win = $(window),
+    var events = mode === 'mobile' ?
+        {
+            begin: 'touchstart',
+            move: 'touchmove',
+            end: 'touchend'
+        } :
+        {
+            begin: 'mousedown',
+            move: 'mousemove',
+            end: 'mouseup'
+        };
+
+    var body = this.document.body,
         element = this;
 
     var moveWith = function(e){
+        if(mode === 'mobile'){
+            e = e.targetTouches[0];
+        }
+
         element.setAttribute({
-            left: e.offsetX - offsetX,
-            top: e.offsetY - offsetY
+            left: e.x - offsetX,
+            top: e.y - offsetY
         });
     };
 
     var endBind = function(e) {
-        win.un('mousemove', moveWith);
-        win.un('mouseup', endBind);
+        body.un(events.move, moveWith);
+        body.un(events.end, endBind);
     };
 
-    element.on('mousedown', function(e) {
+    element.on(events.begin, function(e) {
         e.stopPropagation();
+
+        if(mode === 'mobile'){
+            e = e.targetTouches[0];
+        }
 
         offsetX = e.x - element.getAttribute('left');
         offsetY = e.y - element.getAttribute('top');
 
-        win.on('mousemove', moveWith);
-        win.on('mouseup', endBind);
+        body.on(events.move, moveWith);
+        body.on(events.end, endBind);
     });
 };
 
