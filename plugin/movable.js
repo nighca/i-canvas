@@ -2,39 +2,61 @@
  * movable
  *
  * usage:
- * 	element.movable()
+ *  element.movable()
  */
 
-(function(window, Canvas, undefined){
-	var movable = function(){
-		var offsetX = 0,
-			offsetY = 0;
+var Canvas = require('../core');
 
-		var win = $(window),
-			element = this;
+var movable = function(mode){
+    mode = mode || 'mobile';
 
-		var moveWith = function(e){
-			element.setAttribute({
-				left: e.offsetX - offsetX,
-				top: e.offsetY - offsetY
-			});
-		};
+    var offsetX = 0,
+        offsetY = 0;
 
-		var endBind = function(e) {
-			win.un('mousemove', moveWith);
-			win.un('mouseup', endBind);
-		};
+    var events = mode === 'mobile' ?
+        {
+            begin: 'touchstart',
+            move: 'touchmove',
+            end: 'touchend'
+        } :
+        {
+            begin: 'mousedown',
+            move: 'mousemove',
+            end: 'mouseup'
+        };
 
-		element.on('mousedown', function(e) {
-			e.stopPropagation();
+    var body = this.document.body,
+        element = this;
 
-			offsetX = e.x - element.getAttribute('left');
-			offsetY = e.y - element.getAttribute('top');
+    var moveWith = function(e){
+        if(mode === 'mobile'){
+            e = e.targetTouches[0];
+        }
 
-			win.on('mousemove', moveWith);
-			win.on('mouseup', endBind);
-		});
-	};
+        element.setAttribute({
+            left: e.x - offsetX,
+            top: e.y - offsetY
+        });
+    };
 
-	Canvas.extendElementMethod('movable', movable);
-})(window, Canvas);
+    var endBind = function(e) {
+        body.un(events.move, moveWith);
+        body.un(events.end, endBind);
+    };
+
+    element.on(events.begin, function(e) {
+        e.stopPropagation();
+
+        if(mode === 'mobile'){
+            e = e.targetTouches[0];
+        }
+
+        offsetX = e.x - element.getAttribute('left');
+        offsetY = e.y - element.getAttribute('top');
+
+        body.on(events.move, moveWith);
+        body.on(events.end, endBind);
+    });
+};
+
+Canvas.extendElementMethod('movable', movable);
