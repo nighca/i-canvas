@@ -2,7 +2,7 @@ define(function(require, exports, module){
 
 var Canvas = require('i-canvas');
 
-var canvas = new Canvas($('#canvas'), '2d'),
+var canvas = Canvas.create($('#container')),
     doc = canvas.document,
     body = doc.body;
 
@@ -14,6 +14,15 @@ var rec1 = doc.createElement('rectangle', {
     background: 'yellow',
     border: 'blue',
     'border-width': 5
+});
+
+var img1 = doc.createElement('image', {
+    top: 0,
+    left: 0,
+    width: 80,
+    height: 80,
+    background: null,
+    url: 'https://ss0.baidu.com/6ONWsjip0QIZ8tyhnq/it/u=222842970,3679440991&fm=58'
 });
 
 var circle1 = doc.createElement('circle', {
@@ -41,5 +50,8 @@ rec1.appendChild(circle2);
 circle1.movable();
 circle2.movable();
 rec1.movable();
+
+body.appendChild(img1);
+img1.movable();
 
 });

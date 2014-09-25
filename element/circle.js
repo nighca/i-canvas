@@ -20,6 +20,7 @@ Canvas.extendElementType('circle', {
         if(attr.border){
             var borderWidth = attr['border-width'];
             canvas.drawCircle(pos.x, pos.y, attr.radius + borderWidth, attr.border);
+            canvas.drawCircle(pos.x, pos.y, attr.radius, canvas.opt.background);
         }
 
         if(attr.background){

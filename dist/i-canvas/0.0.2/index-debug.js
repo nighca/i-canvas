@@ -8,6 +8,7 @@ define("i-canvas/0.0.2/index-debug", [], function(require, exports, module) {
   // element types
   require("i-canvas/0.0.2/element/rectangle-debug");
   require("i-canvas/0.0.2/element/circle-debug");
+  require("i-canvas/0.0.2/element/image-debug");
   // plugins
   require("i-canvas/0.0.2/plugin/movable-debug");
   module.exports = Canvas;
@@ -27,23 +28,29 @@ define("i-canvas/0.0.2/core-debug", [], function(require, exports, module) {
   module.exports = Canvas;
 });
 define("i-canvas/0.0.2/lib/canvas-debug", [], function(require, exports, module) {
+  var $ = require("i-canvas/0.0.2/lib/lib-debug");
   var util = require("i-canvas/0.0.2/lib/util-debug");
   var DomManager = require("i-canvas/0.0.2/lib/dom-debug");
   // simulated dom manager class
   var Canvas = util.EventEmitter.extend('Canvas', {
-    init: function(dom, type) {
+    init: function(dom, opt) {
       var canvas = this;
-      // real dom & canvas-ctx
-      canvas.dom = dom;
-      canvas.ctx = canvas.dom.getContext(type || '2d');
-      // canvas size
-      canvas.width = dom.width;
-      canvas.height = dom.height;
+      // options
+      var opt = canvas.opt = $.extend({
+        type: '2d',
+        width: dom.width,
+        height: dom.height,
+        background: '#fff'
+      }, opt, true);
+      // real dom
+      canvas.dom = $(dom);
+      // canvas-ctx
+      canvas.ctx = canvas.dom.getContext(opt.type);
       // simulated document
       canvas.document = new DomManager({
         dom: dom,
-        width: canvas.width,
-        height: canvas.height
+        width: opt.width,
+        height: opt.height
       });
       // redraw while tree modify
       var timer;
@@ -60,9 +67,10 @@ define("i-canvas/0.0.2/lib/canvas-debug", [], function(require, exports, module)
     // draw all elements on the canvas
     draw: function() {
       var canvas = this,
+        opt = canvas.opt,
         ctx = canvas.ctx;
       // clean canvas
-      ctx.clearRect(0, 0, this.width, this.height)
+      ctx.clearRect(0, 0, opt.width, opt.height)
       // get the render sequence & render one by one
       this.document.getRenderQueue().forEach(function(element) {
         element.getAttribute('visible') && element.draw(canvas);
@@ -88,7 +96,97 @@ define("i-canvas/0.0.2/lib/canvas-debug", [], function(require, exports, module)
       ctx.fillStyle = originStyle;
     }
   });
+  Canvas.create = function(container, opt) {
+    opt = $.extend({
+      width: container.clientWidth,
+      height: container.clientHeight
+    }, opt);
+    var dom = document.createElement('canvas');
+    dom.setAttribute('width', opt.width);
+    dom.setAttribute('height', opt.height);
+    container.appendChild(dom);
+    return new Canvas(dom, opt)
+  };
   module.exports = Canvas;
+});
+define("i-canvas/0.0.2/lib/lib-debug", [], function(require, exports, module) {
+  /*
+   * https://github.com/nighca/lib
+   * exports lib
+   */
+  'use strict';
+  // helpers
+  var type = Object.prototype.toString.call.bind(Object.prototype.toString);
+  var forEach = function(object, handler) {
+    if (type(object) === '[object Array]') {
+      for (var i = 0, l = object.length; i < l && handler.call(this, object[i], i) !== false; i++);
+      return;
+    }
+    for (var key in object)
+      if (object.hasOwnProperty(key) && handler.call(this, object[key], key) === false) return;
+  };
+  var clone = function(obj) {
+    if (!obj) return obj;
+    var o = new obj.constructor();
+    forEach(obj, function(val, key) {
+      o[key] = val
+    });
+    return o;
+  };
+  var extend = function(target, addon, self) {
+    target = (self ? target : clone(target)) || {};
+    forEach(addon, function(val, key) {
+      target[key] = val;
+    });
+    return target;
+  };
+  var fns = {
+    on: HTMLElement.prototype.addEventListener,
+    un: HTMLElement.prototype.removeEventListener,
+    css: function(key, val) {
+      var ele = this;
+      return type(key) === '[object String]' ? this.style.setProperty(key, val) : forEach(key, function(v, k) {
+        ele.css(k, v);
+      });
+    },
+    show: function() {
+      this.css('display', '')
+    },
+    hide: function() {
+      this.css('display', 'none')
+    },
+    find: function(selector) {
+      return $(selector, this)
+    },
+    parent: function() {
+      return decorate(this.parentNode)
+    }
+  };
+  var decorate = function(element) {
+    return element ? extend(element, fns, true) : element;
+  };
+  var $ = function(selector, node) {
+    return decorate(type(selector) === '[object String]' ? (node || document).querySelector(selector) : selector);
+  };
+  var $$ = function(selector, node) {
+    return Array.prototype.slice.call(type(selector) === '[object String]' ? (node || document).querySelectorAll(selector) : selector).map(decorate);
+  };
+  // export helpers
+  extend($, {
+    type: type,
+    forEach: forEach,
+    clone: clone,
+    extend: extend,
+    $: $$
+  }, true);
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = $;
+  } else {
+    extend(window, {
+      $: $,
+      $$: $$
+    }, true);
+  }
 });
 define("i-canvas/0.0.2/lib/util-debug", [], function(require, exports, module) {
   /*
@@ -283,8 +381,7 @@ define("i-canvas/0.0.2/lib/dom-debug", [], function(require, exports, module) {
       // body element, also dom tree root
       this.body = this.createElement('rectangle', {
         width: this.width,
-        height: this.height,
-        background: 'red'
+        height: this.height
       });
       // delegate events
       this.delegateEvents();
@@ -456,85 +553,6 @@ define("i-canvas/0.0.2/lib/dom-debug", [], function(require, exports, module) {
     }
   });
   module.exports = DomManager;
-});
-define("i-canvas/0.0.2/lib/lib-debug", [], function(require, exports, module) {
-  /*
-   * https://github.com/nighca/lib
-   * exports lib
-   */
-  'use strict';
-  // helpers
-  var type = Object.prototype.toString.call.bind(Object.prototype.toString);
-  var forEach = function(object, handler) {
-    if (type(object) === '[object Array]') {
-      for (var i = 0, l = object.length; i < l && handler.call(this, object[i], i) !== false; i++);
-      return;
-    }
-    for (var key in object)
-      if (object.hasOwnProperty(key) && handler.call(this, object[key], key) === false) return;
-  };
-  var clone = function(obj) {
-    if (!obj) return obj;
-    var o = new obj.constructor();
-    forEach(obj, function(val, key) {
-      o[key] = val
-    });
-    return o;
-  };
-  var extend = function(target, addon, self) {
-    target = (self ? target : clone(target)) || {};
-    forEach(addon, function(val, key) {
-      target[key] = val;
-    });
-    return target;
-  };
-  var fns = {
-    on: HTMLElement.prototype.addEventListener,
-    un: HTMLElement.prototype.removeEventListener,
-    css: function(key, val) {
-      var ele = this;
-      return type(key) === '[object String]' ? this.style.setProperty(key, val) : forEach(key, function(v, k) {
-        ele.css(k, v);
-      });
-    },
-    show: function() {
-      this.css('display', '')
-    },
-    hide: function() {
-      this.css('display', 'none')
-    },
-    find: function(selector) {
-      return $(selector, this)
-    },
-    parent: function() {
-      return decorate(this.parentNode)
-    }
-  };
-  var decorate = function(element) {
-    return element ? extend(element, fns, true) : element;
-  };
-  var $ = function(selector, node) {
-    return decorate(type(selector) === '[object String]' ? (node || document).querySelector(selector) : selector);
-  };
-  var $$ = function(selector, node) {
-    return Array.prototype.slice.call(type(selector) === '[object String]' ? (node || document).querySelectorAll(selector) : selector).map(decorate);
-  };
-  // export helpers
-  extend($, {
-    type: type,
-    forEach: forEach,
-    clone: clone,
-    extend: extend,
-    $: $$
-  }, true);
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = $;
-  } else {
-    extend(window, {
-      $: $,
-      $$: $$
-    }, true);
-  }
 });
 define("i-canvas/0.0.2/lib/element-debug", [], function(require, exports, module) {
   var util = require("i-canvas/0.0.2/lib/util-debug");
@@ -740,6 +758,7 @@ define("i-canvas/0.0.2/element/rectangle-debug", [], function(require, exports, 
       if (attr.border) {
         var borderWidth = attr['border-width'];
         canvas.drawRectangle(pos.x - borderWidth, pos.y - borderWidth, attr.width + borderWidth * 2, attr.height + borderWidth * 2, attr.border);
+        canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, canvas.opt.background);
       }
       if (attr.background) {
         canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, attr.background);
@@ -775,6 +794,7 @@ define("i-canvas/0.0.2/element/circle-debug", [], function(require, exports, mod
       if (attr.border) {
         var borderWidth = attr['border-width'];
         canvas.drawCircle(pos.x, pos.y, attr.radius + borderWidth, attr.border);
+        canvas.drawCircle(pos.x, pos.y, attr.radius, canvas.opt.background);
       }
       if (attr.background) {
         canvas.drawCircle(pos.x, pos.y, attr.radius, attr.background);
@@ -791,6 +811,72 @@ define("i-canvas/0.0.2/element/circle-debug", [], function(require, exports, mod
       return dd <= rr;
     }
   });
+});
+define("i-canvas/0.0.2/element/image-debug", [], function(require, exports, module) {
+  /*
+   * image
+   *
+   * usage:
+   *  doc.createElement('image', {...})
+   */
+  var Canvas = require("i-canvas/0.0.2/core-debug");
+  // http://blog.sajithmr.me/javascript-check-an-image-is-loaded-or-not
+  var IsImageOk = function(img) {
+    // During the onload event, IE correctly identifies any images that
+    // weren’t downloaded as not complete. Others should too. Gecko-based
+    // browsers act like NS4 in that they report this incorrectly.
+    if (!img.complete) {
+      return false;
+    }
+    // However, they do have two very useful properties: naturalWidth and
+    // naturalHeight. These give the true size of the image. If it failed
+    // to load, either of these should be zero.
+    if (typeof img.naturalWidth !== "undefined" && img.naturalWidth === 0) {
+      return false;
+    }
+    // No other way of checking: assume it’s ok.
+    return true;
+  };
+  // simulated dom element class - image
+  Canvas.extendElementType('image', {
+    attr: {
+      url: null, // [ url('http://...') ]
+      width: 'auto',
+      height: 'auto'
+    },
+    init: function() {
+      this._super.apply(this, arguments);
+      this.createImage();
+    },
+    createImage: function() {
+      var img = new Image();
+      img.src = this.attr.url;
+      return this.image = img;
+    },
+    // draw a image instance
+    drawImage: function(canvas, img) {
+      var pos = this.getPos(),
+        attr = this.attr;
+      canvas.ctx.drawImage(img, pos.x, pos.y, attr.width, attr.height);
+    },
+    // realize image-draw
+    draw: function(canvas) {
+      var pos = this.getPos(),
+        attr = this.attr;
+      // rectangle draw
+      this._super(canvas);
+      var img = this.image.src !== attr.url ? this.createImage() : this.image;
+      if (IsImageOk(img)) {
+        this.drawImage(canvas, img);
+      } else {
+        var element = this;
+        img.addEventListener('load', function() {
+          element.drawImage(canvas, img);
+        });
+      }
+      return this;
+    }
+  }, 'rectangle');
 });
 define("i-canvas/0.0.2/plugin/movable-debug", [], function(require, exports, module) {
   /*

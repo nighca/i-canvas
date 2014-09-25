@@ -17,6 +17,7 @@ Canvas.extendElementType('rectangle', {
         if(attr.border){
             var borderWidth = attr['border-width'];
             canvas.drawRectangle(pos.x - borderWidth, pos.y - borderWidth, attr.width + borderWidth * 2, attr.height + borderWidth * 2, attr.border);
+            canvas.drawRectangle(pos.x, pos.y, attr.width, attr.height, canvas.opt.background);
         }
 
         if(attr.background){
