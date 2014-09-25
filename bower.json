@@ -1,0 +1,22 @@
+{
+  "name": "i-canvas",
+  "main": "index.js",
+  "version": "1.0.0",
+  "homepage": "https://github.com/nighca/i-canvas",
+  "authors": [
+    "nighca <nighca@live.cn>"
+  ],
+  "description": "Lib for generating \\& operating objects on canvas.",
+  "keywords": [
+    "canvas",
+    "dom"
+  ],
+  "license": "Apache",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

@@ -5,8 +5,6 @@ Interactive-canvas
 
 Lib for generating \& operating objects on canvas.
 
-[![spm version](http://spmjs.io/badge/i-canvas)](http://spmjs.io/package/i-canvas)
-
 ## Features
 
 * DOM-like API
@@ -21,7 +19,7 @@ Lib for generating \& operating objects on canvas.
 ## Install
 
 ```
-$ spm install i-canvas --save
+$ bower install i-canvas --save
 ```
 
 ## Usage
@@ -29,7 +27,7 @@ $ spm install i-canvas --save
 ```js
 var Canvas = require('i-canvas');
 
-var canvas = new Canvas($('#canvas'), '2d'),
+var canvas = Canvas.create($('#container')),
 	doc = canvas.document,
 	body = doc.body;
 
