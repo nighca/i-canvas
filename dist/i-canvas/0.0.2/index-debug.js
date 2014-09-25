@@ -73,7 +73,7 @@ define("i-canvas/0.0.2/lib/canvas-debug", [], function(require, exports, module)
       ctx.clearRect(0, 0, opt.width, opt.height)
       // get the render sequence & render one by one
       this.document.getRenderQueue().forEach(function(element) {
-        element.getAttribute('visible') && element.draw(canvas);
+        element.draw(canvas);
       });
     },
     // method to draw a rectangle
@@ -409,12 +409,16 @@ define("i-canvas/0.0.2/lib/dom-debug", [], function(require, exports, module) {
         domEvent: e
       });
     },
-    // get a array as render sequence(decided by tree structure & elements' z-index attribute)
+    // get a array as render sequence(decided by tree structure & elements' visible/z-index attribute)
     getRenderQueue: function() {
       var queue = [];
       this.body.walk(function(element) {
         element.__cache__.zIndex = null; // clean cache
-        queue.push(element);
+        if (element.getAttribute('visible')) {
+          queue.push(element);
+        } else {
+          return false;
+        }
       });
       var getZIndex = function(element) {
         return element.__cache__.zIndex !== null ? element.__cache__.zIndex : (element.__cache__.zIndex = element.getZIndex());
@@ -644,10 +648,11 @@ define("i-canvas/0.0.2/lib/element-debug", [], function(require, exports, module
     // walk the tree (self as the root) [fn, true/false]
     walk: function(handler, childrenFirst) {
       if (!childrenFirst) {
-        handler(this);
-        this.children.forEach(function(child, i) {
-          child.walk(handler);
-        });
+        if (handler(this) !== false) {
+          this.children.forEach(function(child, i) {
+            child.walk(handler);
+          });
+        }
       } else {
         this.children.forEach(function(child, i) {
           child.walk(handler, true);
