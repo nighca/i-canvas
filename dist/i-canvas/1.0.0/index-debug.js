@@ -10,7 +10,7 @@ define("i-canvas/1.0.0/index-debug", [], function(require, exports, module) {
   require("i-canvas/1.0.0/element/circle-debug");
   require("i-canvas/1.0.0/element/image-debug");
   // plugins
-  require("i-canvas/1.0.0/plugin/movable-debug");
+  require("i-canvas/1.0.0/plugin/draggable-debug");
   module.exports = Canvas;
 });
 define("i-canvas/1.0.0/core-debug", [], function(require, exports, module) {
@@ -31,16 +31,19 @@ define("i-canvas/1.0.0/lib/canvas-debug", [], function(require, exports, module)
   var $ = require("i-canvas/1.0.0/lib/lib-debug");
   var util = require("i-canvas/1.0.0/lib/util-debug");
   var DomManager = require("i-canvas/1.0.0/lib/dom-debug");
+  var Clock = require("i-canvas/1.0.0/lib/clock-debug");
   // simulated dom manager class
   var Canvas = util.EventEmitter.extend('Canvas', {
     init: function(dom, opt) {
+      this._super.apply(this, arguments);
       var canvas = this;
       // options
       var opt = canvas.opt = $.extend({
         type: '2d',
         width: dom.width,
         height: dom.height,
-        background: '#fff'
+        background: '#fff',
+        fps: 60
       }, opt, true);
       // real dom
       canvas.dom = $(dom);
@@ -52,17 +55,20 @@ define("i-canvas/1.0.0/lib/canvas-debug", [], function(require, exports, module)
         width: opt.width,
         height: opt.height
       });
-      // redraw while tree modify
-      var timer;
+      // marke while tree modify
+      canvas.needRedraw = true;
       canvas.document.on('dom-event', function(e) {
         if (['attr-modify', 'subtree-modify'].indexOf(e.domEvent.type) >= 0) {
-          clearTimeout(timer);
-          timer = setTimeout(function() {
-            canvas.draw();
-          }, 0);
+          canvas.needRedraw = true;
         }
       });
-      canvas.draw();
+      // clock
+      var clock = canvas.clock = new Clock(opt.fps);
+      clock.on('tick', function(info) {
+        if (canvas.needRedraw) {
+          canvas.draw();
+        }
+      });
     },
     // draw all elements on the canvas
     draw: function() {
@@ -232,15 +238,16 @@ define("i-canvas/1.0.0/lib/util-debug", [], function(require, exports, module) {
   };
   // event emitter class
   var EventEmitter = Class.extend('EventEmitter', {
+    init: function() {
+      this.__eventList__ = {};
+    },
     on: function(name, handler) {
-      name = name.toLowerCase();
-      var list = this.__eventGetList__();
+      var list = this.__eventList__;
       (list[name] = list[name] || []).push(handler);
       return this;
     },
     un: function(name, handler) {
-      name = name.toLowerCase();
-      var list = this.__eventGetList__(),
+      var list = this.__eventList__,
         handlers = list[name];
       if (handlers) {
         if (!handler) {
@@ -257,12 +264,7 @@ define("i-canvas/1.0.0/lib/util-debug", [], function(require, exports, module) {
       return this;
     },
     fire: function(name, data) {
-      if (Object.prototype.toString.call(name) === '[object Object]' && name.type && !data) {
-        data = name;
-        name = data.type;
-      }
-      name = name.toLowerCase();
-      var list = this.__eventGetList__(),
+      var list = this.__eventList__,
         handlers = list[name];
       if (handlers) {
         for (var i = 0, len = handlers.length; i < len; i++) {
@@ -274,12 +276,6 @@ define("i-canvas/1.0.0/lib/util-debug", [], function(require, exports, module) {
         }
       }
       return this;
-    },
-    __eventGetList__: function() {
-      if (!this.__eventList__) {
-        this.__eventList__ = {};
-      }
-      return this.__eventList__;
     }
   });
   // export
@@ -368,6 +364,7 @@ define("i-canvas/1.0.0/lib/dom-debug", [], function(require, exports, module) {
   // simulated dom manager class
   var DomManager = util.EventEmitter.extend('DomManager', {
     init: function(opt) {
+      this._super.apply(this, arguments);
       // real dom object
       this.dom = opt.dom;
       // size
@@ -577,6 +574,7 @@ define("i-canvas/1.0.0/lib/element-debug", [], function(require, exports, module
       border: null // border style - [ color(#333) ]
     },
     init: function(document, opt) {
+      this._super.apply(this, arguments);
       // document as enviroment
       this.document = document;
       // init attributes
@@ -746,6 +744,28 @@ define("i-canvas/1.0.0/lib/element-debug", [], function(require, exports, module
   }, true);
   module.exports = Element;
 });
+define("i-canvas/1.0.0/lib/clock-debug", [], function(require, exports, module) {
+  var $ = require("i-canvas/1.0.0/lib/lib-debug");
+  var util = require("i-canvas/1.0.0/lib/util-debug");
+  var Clock = util.EventEmitter.extend('Clock', {
+    init: function(fps) {
+      this._super.apply(this, arguments);
+      this.fps = fps;
+      this.run();
+    },
+    run: function() {
+      var clock = this,
+        interval = 1000 / this.fps;
+      clock.count = 0;
+      this.timer = setInterval(function() {
+        clock.fire('tick', {
+          count: ++clock.count
+        });
+      }, interval);
+    }
+  });
+  module.exports = Clock;
+});
 define("i-canvas/1.0.0/element/rectangle-debug", [], function(require, exports, module) {
   /*
    * rectangle
@@ -869,7 +889,7 @@ define("i-canvas/1.0.0/element/image-debug", [], function(require, exports, modu
       var pos = this.getPos(),
         attr = this.attr;
       // rectangle draw
-      this._super(canvas);
+      this._super.apply(this, arguments);
       var img = this.image.src !== attr.url ? this.createImage() : this.image;
       if (IsImageOk(img)) {
         this.drawImage(canvas, img);
@@ -883,15 +903,15 @@ define("i-canvas/1.0.0/element/image-debug", [], function(require, exports, modu
     }
   }, 'rectangle');
 });
-define("i-canvas/1.0.0/plugin/movable-debug", [], function(require, exports, module) {
+define("i-canvas/1.0.0/plugin/draggable-debug", [], function(require, exports, module) {
   /*
-   * movable
+   * draggable
    *
    * usage:
-   *  element.movable()
+   *  element.draggable()
    */
   var Canvas = require("i-canvas/1.0.0/core-debug");
-  var movable = function(mode) {
+  var draggable = function(mode) {
     mode = mode || 'mobile';
     var offsetX = 0,
       offsetY = 0;
@@ -930,5 +950,5 @@ define("i-canvas/1.0.0/plugin/movable-debug", [], function(require, exports, mod
       body.on(events.end, endBind);
     });
   };
-  Canvas.extendElementMethod('movable', movable);
+  Canvas.extendElementMethod('draggable', draggable);
 });

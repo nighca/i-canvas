@@ -15,7 +15,7 @@ var rec1 = doc.createElement('rectangle', {
     border: 'blue',
     'border-width': 5
 });
-
+/*
 var img1 = doc.createElement('image', {
     top: 0,
     left: 0,
@@ -41,17 +41,18 @@ var circle2 = doc.createElement('circle', {
     background: 'green',
     position: 'relative',
     'z-index': 10
-});
+});*/
 
 body.appendChild(rec1);
-body.appendChild(circle1);
+rec1.draggable();
+/*body.appendChild(circle1);
 rec1.appendChild(circle2);
 
-circle1.movable();
-circle2.movable();
-rec1.movable();
+circle1.draggable();
+circle2.draggable();
+rec1.draggable();
 
 body.appendChild(img1);
-img1.movable();
+img1.draggable();*/
 
 });

@@ -12,6 +12,6 @@ require('./element/circle');
 require('./element/image');
 
 // plugins
-require('./plugin/movable');
+require('./plugin/draggable');
 
 module.exports = Canvas;

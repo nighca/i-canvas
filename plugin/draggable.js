@@ -1,13 +1,13 @@
 /*
- * movable
+ * draggable
  *
  * usage:
- *  element.movable()
+ *  element.draggable()
  */
 
 var Canvas = require('../core');
 
-var movable = function(mode){
+var draggable = function(mode){
     mode = mode || 'mobile';
 
     var offsetX = 0,
@@ -59,4 +59,4 @@ var movable = function(mode){
     });
 };
 
-Canvas.extendElementMethod('movable', movable);
+Canvas.extendElementMethod('draggable', draggable);
