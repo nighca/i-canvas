@@ -1062,6 +1062,7 @@ define("i-canvas/1.2.0/plugin/draggable-debug", [], function(require, exports, m
       var endBind = function(e) {
         body.un(events.move, moveWith);
         body.un(events.end, endBind);
+        element.fire('drag-end');
       };
       element.on(events.begin, function(e) {
         e.stopPropagation();
@@ -1072,6 +1073,7 @@ define("i-canvas/1.2.0/plugin/draggable-debug", [], function(require, exports, m
         offsetY = e.y - element.getAttribute('top');
         body.on(events.move, moveWith);
         body.on(events.end, endBind);
+        element.fire('drag-begin');
       });
     }
     return this;
