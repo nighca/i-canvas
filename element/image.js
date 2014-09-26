@@ -59,7 +59,7 @@ Canvas.extendElementType('image', {
             attr = this.attr;
 
         // rectangle draw
-        this._super(canvas);
+        this._super.apply(this, arguments);
 
         var img = this.image.src !== attr.url ?
             this.createImage() :

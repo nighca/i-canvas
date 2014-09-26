@@ -1,25 +1,28 @@
-define("i-canvas/1.0.0/index-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/index-debug", [], function(require, exports, module) {
   /*
    * canvas
    * exports Canvas
    */
   // core
-  var Canvas = require("i-canvas/1.0.0/core-debug");
+  var Canvas = require("i-canvas/1.2.0/core-debug");
   // element types
-  require("i-canvas/1.0.0/element/rectangle-debug");
-  require("i-canvas/1.0.0/element/circle-debug");
-  require("i-canvas/1.0.0/element/image-debug");
+  require("i-canvas/1.2.0/element/rectangle-debug");
+  require("i-canvas/1.2.0/element/circle-debug");
+  require("i-canvas/1.2.0/element/image-debug");
   // plugins
-  require("i-canvas/1.0.0/plugin/draggable-debug");
+  require("i-canvas/1.2.0/plugin/move-debug");
+  require("i-canvas/1.2.0/plugin/accelerate-debug");
+  require("i-canvas/1.2.0/plugin/friction-debug");
+  require("i-canvas/1.2.0/plugin/draggable-debug");
   module.exports = Canvas;
 });
-define("i-canvas/1.0.0/core-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/core-debug", [], function(require, exports, module) {
   /*
    * core
    * exports Canvas core
    */
-  var Canvas = require("i-canvas/1.0.0/lib/canvas-debug");
-  var Element = require("i-canvas/1.0.0/lib/element-debug");
+  var Canvas = require("i-canvas/1.2.0/lib/canvas-debug");
+  var Element = require("i-canvas/1.2.0/lib/element-debug");
   // export methods
   $.extend(Canvas, {
     extendElementType: Element.extendType,
@@ -27,11 +30,11 @@ define("i-canvas/1.0.0/core-debug", [], function(require, exports, module) {
   }, true);
   module.exports = Canvas;
 });
-define("i-canvas/1.0.0/lib/canvas-debug", [], function(require, exports, module) {
-  var $ = require("i-canvas/1.0.0/lib/lib-debug");
-  var util = require("i-canvas/1.0.0/lib/util-debug");
-  var DomManager = require("i-canvas/1.0.0/lib/dom-debug");
-  var Clock = require("i-canvas/1.0.0/lib/clock-debug");
+define("i-canvas/1.2.0/lib/canvas-debug", [], function(require, exports, module) {
+  var $ = require("i-canvas/1.2.0/lib/lib-debug");
+  var util = require("i-canvas/1.2.0/lib/util-debug");
+  var DomManager = require("i-canvas/1.2.0/lib/dom-debug");
+  var Clock = require("i-canvas/1.2.0/lib/clock-debug");
   // simulated dom manager class
   var Canvas = util.EventEmitter.extend('Canvas', {
     init: function(dom, opt) {
@@ -50,14 +53,14 @@ define("i-canvas/1.0.0/lib/canvas-debug", [], function(require, exports, module)
       // canvas-ctx
       canvas.ctx = canvas.dom.getContext(opt.type);
       // simulated document
-      canvas.document = new DomManager({
+      var document = canvas.document = new DomManager({
         dom: dom,
         width: opt.width,
         height: opt.height
       });
       // marke while tree modify
       canvas.needRedraw = true;
-      canvas.document.on('dom-event', function(e) {
+      document.on('dom-event', function(e) {
         if (['attr-modify', 'subtree-modify'].indexOf(e.domEvent.type) >= 0) {
           canvas.needRedraw = true;
         }
@@ -68,6 +71,9 @@ define("i-canvas/1.0.0/lib/canvas-debug", [], function(require, exports, module)
         if (canvas.needRedraw) {
           canvas.draw();
         }
+        document.walk(function(element) {
+          element.fire('tick', info);
+        });
       });
     },
     // draw all elements on the canvas
@@ -115,7 +121,7 @@ define("i-canvas/1.0.0/lib/canvas-debug", [], function(require, exports, module)
   };
   module.exports = Canvas;
 });
-define("i-canvas/1.0.0/lib/lib-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/lib/lib-debug", [], function(require, exports, module) {
   /*
    * https://github.com/nighca/lib
    * exports lib
@@ -194,13 +200,13 @@ define("i-canvas/1.0.0/lib/lib-debug", [], function(require, exports, module) {
     }, true);
   }
 });
-define("i-canvas/1.0.0/lib/util-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/lib/util-debug", [], function(require, exports, module) {
   /*
    * helper methods
    * exports util
    */
   'use strict';
-  var Class = require("i-canvas/1.0.0/lib/class-debug");
+  var Class = require("i-canvas/1.2.0/lib/class-debug");
   // merge sort realization
   // tips: array.prototype.sort is stable in some browsers(e.g. firefox) while unstable in some others(e.g. chrome)
   //       such result is not (maybe also will not be) ensured
@@ -284,7 +290,7 @@ define("i-canvas/1.0.0/lib/util-debug", [], function(require, exports, module) {
     EventEmitter: EventEmitter
   };
 });
-define("i-canvas/1.0.0/lib/class-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/lib/class-debug", [], function(require, exports, module) {
   /* Simple JavaScript Inheritance
    * By John Resig http://ejohn.org/
    * MIT Licensed.
@@ -342,11 +348,11 @@ define("i-canvas/1.0.0/lib/class-debug", [], function(require, exports, module) 
   };
   module.exports = Class;
 });
-define("i-canvas/1.0.0/lib/dom-debug", [], function(require, exports, module) {
-  var Class = require("i-canvas/1.0.0/lib/class-debug");
-  var util = require("i-canvas/1.0.0/lib/util-debug");
-  var $ = require("i-canvas/1.0.0/lib/lib-debug");
-  var Element = require("i-canvas/1.0.0/lib/element-debug");
+define("i-canvas/1.2.0/lib/dom-debug", [], function(require, exports, module) {
+  var Class = require("i-canvas/1.2.0/lib/class-debug");
+  var util = require("i-canvas/1.2.0/lib/util-debug");
+  var $ = require("i-canvas/1.2.0/lib/lib-debug");
+  var Element = require("i-canvas/1.2.0/lib/element-debug");
   // simulated dom-event class
   var DomEvent = Class.extend('DomEvent', {
     prevented: false,
@@ -406,10 +412,14 @@ define("i-canvas/1.0.0/lib/dom-debug", [], function(require, exports, module) {
         domEvent: e
       });
     },
+    // walk dom tree
+    walk: function() {
+      return this.body.walk.apply(this.body, arguments);
+    },
     // get a array as render sequence(decided by tree structure & elements' visible/z-index attribute)
     getRenderQueue: function() {
       var queue = [];
-      this.body.walk(function(element) {
+      this.walk(function(element) {
         element.__cache__.zIndex = null; // clean cache
         if (element.getAttribute('visible')) {
           queue.push(element);
@@ -555,9 +565,9 @@ define("i-canvas/1.0.0/lib/dom-debug", [], function(require, exports, module) {
   });
   module.exports = DomManager;
 });
-define("i-canvas/1.0.0/lib/element-debug", [], function(require, exports, module) {
-  var util = require("i-canvas/1.0.0/lib/util-debug");
-  var $ = require("i-canvas/1.0.0/lib/lib-debug");
+define("i-canvas/1.2.0/lib/element-debug", [], function(require, exports, module) {
+  var util = require("i-canvas/1.2.0/lib/util-debug");
+  var $ = require("i-canvas/1.2.0/lib/lib-debug");
   // simulated dom element base class
   var Element = util.EventEmitter.extend('Element', {
     // default attribute values
@@ -573,12 +583,15 @@ define("i-canvas/1.0.0/lib/element-debug", [], function(require, exports, module
       'border-width': 0, // width of border - [ number(1) ]
       border: null // border style - [ color(#333) ]
     },
+    // element status (move, draggable, ...)
+    status: {},
     init: function(document, opt) {
       this._super.apply(this, arguments);
       // document as enviroment
       this.document = document;
       // init attributes
       this.attr = $.extend(this.attr, opt);
+      this.status = $.extend(this.status);
       this.children = [];
       // some special usage
       this.__cache__ = {};
@@ -744,9 +757,9 @@ define("i-canvas/1.0.0/lib/element-debug", [], function(require, exports, module
   }, true);
   module.exports = Element;
 });
-define("i-canvas/1.0.0/lib/clock-debug", [], function(require, exports, module) {
-  var $ = require("i-canvas/1.0.0/lib/lib-debug");
-  var util = require("i-canvas/1.0.0/lib/util-debug");
+define("i-canvas/1.2.0/lib/clock-debug", [], function(require, exports, module) {
+  var $ = require("i-canvas/1.2.0/lib/lib-debug");
+  var util = require("i-canvas/1.2.0/lib/util-debug");
   var Clock = util.EventEmitter.extend('Clock', {
     init: function(fps) {
       this._super.apply(this, arguments);
@@ -766,14 +779,14 @@ define("i-canvas/1.0.0/lib/clock-debug", [], function(require, exports, module) 
   });
   module.exports = Clock;
 });
-define("i-canvas/1.0.0/element/rectangle-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/element/rectangle-debug", [], function(require, exports, module) {
   /*
    * rectangle
    *
    * usage:
    *  doc.createElement('rectangle', {...})
    */
-  var Canvas = require("i-canvas/1.0.0/core-debug");
+  var Canvas = require("i-canvas/1.2.0/core-debug");
   // simulated dom element class - rectangle
   Canvas.extendElementType('rectangle', {
     // realize rectangle-draw
@@ -799,14 +812,14 @@ define("i-canvas/1.0.0/element/rectangle-debug", [], function(require, exports, 
     }
   });
 });
-define("i-canvas/1.0.0/element/circle-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/element/circle-debug", [], function(require, exports, module) {
   /*
    * circle
    *
    * usage:
    *  doc.createElement('circle', {...})
    */
-  var Canvas = require("i-canvas/1.0.0/core-debug");
+  var Canvas = require("i-canvas/1.2.0/core-debug");
   // simulated dom element class - circle
   Canvas.extendElementType('circle', {
     attr: {
@@ -837,14 +850,14 @@ define("i-canvas/1.0.0/element/circle-debug", [], function(require, exports, mod
     }
   });
 });
-define("i-canvas/1.0.0/element/image-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/element/image-debug", [], function(require, exports, module) {
   /*
    * image
    *
    * usage:
    *  doc.createElement('image', {...})
    */
-  var Canvas = require("i-canvas/1.0.0/core-debug");
+  var Canvas = require("i-canvas/1.2.0/core-debug");
   // http://blog.sajithmr.me/javascript-check-an-image-is-loaded-or-not
   var IsImageOk = function(img) {
     // During the onload event, IE correctly identifies any images that
@@ -903,52 +916,165 @@ define("i-canvas/1.0.0/element/image-debug", [], function(require, exports, modu
     }
   }, 'rectangle');
 });
-define("i-canvas/1.0.0/plugin/draggable-debug", [], function(require, exports, module) {
+define("i-canvas/1.2.0/plugin/move-debug", [], function(require, exports, module) {
+  /*
+   * move
+   *
+   * usage:
+   *  element.move(velocity) [{x:number, y:number}]
+   */
+  var Canvas = require("i-canvas/1.2.0/core-debug");
+  var move = function(velocity) {
+    var element = this;
+    element.velocity = velocity || element.velocity || {
+      x: 0,
+      y: 0
+    };
+    if (element.status.move) {
+      // do nothing
+    } else {
+      element.status.move = true;
+      // moves by velocity per tick
+      element.on('tick', function(info) {
+        var v = element.velocity;
+        element.setAttribute({
+          top: element.getAttribute('top') - v.y,
+          left: element.getAttribute('left') + v.x
+        });
+      });
+    }
+    return this;
+  };
+  Canvas.extendElementMethod('move', move);
+});
+define("i-canvas/1.2.0/plugin/accelerate-debug", [], function(require, exports, module) {
+  /*
+   * accelerate
+   *
+   * usage:
+   *  element.accelerate(acceleration) [{x:number, y:number}]
+   */
+  var Canvas = require("i-canvas/1.2.0/core-debug");
+  var accelerate = function(acceleration) {
+    var element = this;
+    element.acceleration = acceleration || element.acceleration || {
+      x: 0,
+      y: 0
+    };
+    if (element.status.accelerate) {
+      // do nothing
+    } else {
+      element.status.accelerate = true;
+      element.move();
+      element.on('tick', function(info) {
+        var v = element.velocity,
+          a = element.acceleration;
+        element.velocity = {
+          x: v.x - a.x,
+          y: v.y - a.y
+        };
+      });
+    }
+    return this;
+  };
+  Canvas.extendElementMethod('accelerate', accelerate);
+});
+define("i-canvas/1.2.0/plugin/friction-debug", [], function(require, exports, module) {
+  /*
+   * friction
+   *
+   * usage:
+   *  element.friction(ratio) [number]
+   */
+  var Canvas = require("i-canvas/1.2.0/core-debug");
+  var absolute = function(n) {
+    return n >= 0 ? n : -n;
+  };
+  var friction = function(ratio) {
+    var element = this;
+    element.frictionRatio = ratio || element.frictionRatio || 0;
+    if (element.status.friction) {
+      // do nothing
+    } else {
+      element.status.friction = true;
+      element.on('tick', function(info) {
+        var v = element.velocity;
+        if (v.x || v.y) {
+          // use inaccuracy algoritm temporarily
+          var vv = absolute(v.x) + absolute(v.y),
+            rv = element.frictionRatio,
+            ratio = {
+              x: (v.x / vv) * rv,
+              y: (v.y / vv) * rv
+            };
+          var newV = {
+            x: v.x - ratio.x,
+            y: v.y - ratio.y
+          };
+          if (v.x > 0 && newV.x < 0 || v.x < 0 && newV.x > 0) {
+            newV.x = 0;
+            newV.y = 0;
+          }
+          element.velocity = newV;
+        }
+      });
+    }
+    return this;
+  };
+  Canvas.extendElementMethod('friction', friction);
+});
+define("i-canvas/1.2.0/plugin/draggable-debug", [], function(require, exports, module) {
   /*
    * draggable
    *
    * usage:
-   *  element.draggable()
+   *  element.draggable(mode) ['mobile'(default)/'pc']
    */
-  var Canvas = require("i-canvas/1.0.0/core-debug");
+  var Canvas = require("i-canvas/1.2.0/core-debug");
   var draggable = function(mode) {
     mode = mode || 'mobile';
-    var offsetX = 0,
-      offsetY = 0;
-    var events = mode === 'mobile' ? {
-      begin: 'touchstart',
-      move: 'touchmove',
-      end: 'touchend'
-    } : {
-      begin: 'mousedown',
-      move: 'mousemove',
-      end: 'mouseup'
-    };
-    var body = this.document.body,
-      element = this;
-    var moveWith = function(e) {
-      if (mode === 'mobile') {
-        e = e.targetTouches[0];
-      }
-      element.setAttribute({
-        left: e.x - offsetX,
-        top: e.y - offsetY
+    if (this.status.draggable) {
+      // do nothing
+    } else {
+      this.status.draggable = true;
+      var offsetX = 0,
+        offsetY = 0;
+      var events = mode === 'mobile' ? {
+        begin: 'touchstart',
+        move: 'touchmove',
+        end: 'touchend'
+      } : {
+        begin: 'mousedown',
+        move: 'mousemove',
+        end: 'mouseup'
+      };
+      var body = this.document.body,
+        element = this;
+      var moveWith = function(e) {
+        if (mode === 'mobile') {
+          e = e.targetTouches[0];
+        }
+        element.setAttribute({
+          left: e.x - offsetX,
+          top: e.y - offsetY
+        });
+      };
+      var endBind = function(e) {
+        body.un(events.move, moveWith);
+        body.un(events.end, endBind);
+      };
+      element.on(events.begin, function(e) {
+        e.stopPropagation();
+        if (mode === 'mobile') {
+          e = e.targetTouches[0];
+        }
+        offsetX = e.x - element.getAttribute('left');
+        offsetY = e.y - element.getAttribute('top');
+        body.on(events.move, moveWith);
+        body.on(events.end, endBind);
       });
-    };
-    var endBind = function(e) {
-      body.un(events.move, moveWith);
-      body.un(events.end, endBind);
-    };
-    element.on(events.begin, function(e) {
-      e.stopPropagation();
-      if (mode === 'mobile') {
-        e = e.targetTouches[0];
-      }
-      offsetX = e.x - element.getAttribute('left');
-      offsetY = e.y - element.getAttribute('top');
-      body.on(events.move, moveWith);
-      body.on(events.end, endBind);
-    });
+    }
+    return this;
   };
   Canvas.extendElementMethod('draggable', draggable);
 });

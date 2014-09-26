@@ -8,16 +8,14 @@ var canvas = Canvas.create($('#container')),
 
 var rec1 = doc.createElement('rectangle', {
     top: 100,
-    left: 100,
+    left: 0,
     width: 100,
     height: 100,
-    background: 'yellow',
-    border: 'blue',
-    'border-width': 5
+    background: '#000'
 });
 
 var img1 = doc.createElement('image', {
-    top: 0,
+    top: 100,
     left: 0,
     width: 80,
     height: 80,
@@ -44,14 +42,12 @@ var circle2 = doc.createElement('circle', {
 });
 
 body.appendChild(rec1);
-body.appendChild(circle1);
-rec1.appendChild(circle2);
-
-circle1.movable();
-circle2.movable();
-rec1.movable();
-
 body.appendChild(img1);
-img1.movable();
+body.appendChild(circle1);
+body.appendChild(circle2);
+rec1.draggable();
+img1.move({x:6,y:8}).accelerate({x:0,y:0.6});
+circle1.move({x:-2,y:4}).accelerate({x:0,y:0.6});
+circle2.move({x:3,y:2}).accelerate({x:0,y:0.6});
 
 });
