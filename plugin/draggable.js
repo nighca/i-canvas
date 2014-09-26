@@ -47,6 +47,8 @@ var draggable = function(mode){
         var endBind = function(e) {
             body.un(events.move, moveWith);
             body.un(events.end, endBind);
+
+            element.fire('drag-end');
         };
 
         element.on(events.begin, function(e) {
@@ -61,6 +63,8 @@ var draggable = function(mode){
 
             body.on(events.move, moveWith);
             body.on(events.end, endBind);
+
+            element.fire('drag-begin');
         });
 
     }
