@@ -42,9 +42,9 @@ var circle2 = doc.createElement('circle', {
 });
 
 body.appendChild(rec1);
-/*body.appendChild(img1);
+body.appendChild(img1);
 body.appendChild(circle1);
-body.appendChild(circle2);*/
+body.appendChild(circle2);
 rec1.draggable().accelerate({x:0,y:0.1});
 rec1.on('drag-begin', function(){
     rec1.move({x:0, y:0}).accelerate({x:0,y:0});
@@ -52,8 +52,10 @@ rec1.on('drag-begin', function(){
 rec1.on('drag-end', function(){
     rec1.accelerate({x:0,y:0.1});
 });
-/*img1.move({x:6,y:8}).accelerate({x:0,y:0.6});
-circle1.move({x:-2,y:4}).accelerate({x:0,y:0.6});
-circle2.move({x:3,y:2}).accelerate({x:0,y:0.6});*/
+img1.move({x:6,y:0}).friction(0.08);
+circle1.move({x:-2,y:4}).accelerate({x:0,y:0.1});
+circle2.move({x:3,y:2}).accelerate({x:0,y:0.1});
+
+img1.draggable();
 
 });
