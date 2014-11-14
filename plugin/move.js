@@ -21,7 +21,7 @@ var move = function(velocity){
         element.on('tick', function(info){
             var v = element.velocity;
             element.setAttribute({
-                top: element.getAttribute('top') - v.y,
+                top: element.getAttribute('top') + v.y,
                 left: element.getAttribute('left') + v.x
             });
         });
