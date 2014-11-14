@@ -26,12 +26,21 @@ Canvas.extendElementType('rectangle', {
 
         return this;
     },
-    // realize rectangle-contain
-    containsPoint: function(x, y){
+    // get range
+    getRange: function(){
         var pos = this.getPos(),
             attr = this.attr,
             borderWidth = attr.border ? attr['border-width'] : 0;
-        return (x >= pos.x - borderWidth && x <= pos.x + attr.width + borderWidth) &&
-            (y >= pos.y - borderWidth && y <= pos.y + attr.height + borderWidth);
+
+        return {
+            x: { min: pos.x - borderWidth, max: pos.x + attr.width + borderWidth },
+            y: { min: pos.y - borderWidth, max: pos.y + attr.height + borderWidth }
+        };
+    },
+    // realize rectangle-contain
+    containsPoint: function(x, y){
+        var range = this.getRange();
+        return (x >= range.x.min && x <= range.x.max) &&
+            (y >= range.y.min && y <= range.y.max);
     }
 });

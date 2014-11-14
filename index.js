@@ -16,5 +16,6 @@ require('./plugin/move');
 require('./plugin/accelerate');
 require('./plugin/friction');
 require('./plugin/draggable');
+require('./plugin/bound');
 
 module.exports = Canvas;

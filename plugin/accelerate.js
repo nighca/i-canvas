@@ -20,12 +20,12 @@ var accelerate = function(acceleration){
         element.move();
 
         element.on('tick', function(info){
-            var v = element.velocity,
+            var v = element.originVelocity = element.velocity,
                 a = element.acceleration;
 
             element.velocity = {
-                x: v.x - a.x,
-                y: v.y - a.y
+                x: v.x + a.x,
+                y: v.y + a.y
             };
         });
     }
